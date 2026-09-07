@@ -9,6 +9,7 @@
 #define PI 3.1415926535
 #define P2 PI/2
 #define P3 3*PI/2
+#define DR 0.0174533 // 1 degree to radians that C uses 
 
 float px,py,pdx,pdy,pa; // pa - player angle, d used for delta
 
@@ -74,13 +75,16 @@ float dist(float ax, float ay, float bx, float by, float ang)
 {
     return( sqrt((bx-ax)*(bx-ax)+(by-ay)*(by-ay)) );
 }
+
 void drawRays2D()
 {
     int r,mx,my,mp,dof;
-    float rx,ry,ra,xo,yo;
+    float rx,ry,ra,xo,yo,disT;
+    ra=pa-DR*30; if(ra<0){ ra+=2*PI; } if(ra>2*PI){ ra-=2*PI; }
 
-    ra=pa;
-    for(r=0;r<1;r++)
+    //normal angle
+    // ra=pa;
+    for(r=0;r<60;r++)
     {
         // horizontal check
         dof=0;
@@ -146,12 +150,16 @@ void drawRays2D()
         {
             rx=vx;
             ry=vy;
+            disT=disV;
         } 
         else {
             rx=hx;
             ry=hy;
+            disT=distH;
         }
         glColor3f(1,0,0); glLineWidth(1); glBegin(GL_LINES); glVertex2i(px,py); glVertex2i(rx,ry); glEnd();
+        
+        ra+=DR;  if(ra<0){ ra+=2*PI; } if(ra>2*PI){ ra-=2*PI; }
     }
 }
 void display()
