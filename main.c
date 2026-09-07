@@ -70,7 +70,11 @@ void drawPlayer()
     glEnd();
 }
 
-void drawRays3D()
+float dist(float ax, float ay, float bx, float by, float ang)
+{
+    return( sqrt((bx-ax)*(bx-ax)+(by-ay)*(by-ay)) );
+}
+void drawRays2D()
 {
     int r,mx,my,mp,dof;
     float rx,ry,ra,xo,yo;
@@ -80,6 +84,7 @@ void drawRays3D()
     {
         // horizontal check
         dof=0;
+        float distH=100000,hx=px,hy=py;
         float aTan=-1/tan(ra);
 
         if(ra>PI) 
@@ -102,13 +107,15 @@ void drawRays3D()
             mx=(int)(rx)>>6; my=(int)(ry)>>6;
             mp=my*mapX+mx;
 
-            if(mp<mapX*mapY && map[mp]==1) { dof=8; } // hit the wall
+            if(mp>0 && mp<mapX*mapY && map[mp]==1) { hx=rx; hy=ry; distH=dist(px,py,hx,hy,ra); dof=8; } // hit the wall
             else{ rx+=xo; ry+=yo; dof+=1; }
         }
-        glColor3f(0,1,0); glLineWidth(1); glBegin(GL_LINES); glVertex2i(px,py); glVertex2i(rx,ry); glEnd();
+        //drawing horizontal check line
+        // glColor3f(0,1,0); glLineWidth(1); glBegin(GL_LINES); glVertex2i(px,py); glVertex2i(rx,ry); glEnd();
 
         // --- vertical check ---
         dof=0;
+        float disV=1000000,vx=px,vy=py;
         float nTan=-tan(ra);
 
         if(ra>P2 && ra<P3) 
@@ -131,8 +138,18 @@ void drawRays3D()
             mx=(int)(rx)>>6; my=(int)(ry)>>6;
             mp=my*mapX+mx;
 
-            if(mp<mapX*mapY && map[mp]==1) { dof=8; } // hit the wall
+            if(mp > 0 && mp<mapX*mapY && map[mp]==1) { vx=rx; vy=ry; disV=dist(px,py,vx,vy,ra); dof=8; } // hit the wall
             else{ rx+=xo; ry+=yo; dof+=1; }
+        }
+
+        if(disV<distH)
+        {
+            rx=vx;
+            ry=vy;
+        } 
+        else {
+            rx=hx;
+            ry=hy;
         }
         glColor3f(1,0,0); glLineWidth(1); glBegin(GL_LINES); glVertex2i(px,py); glVertex2i(rx,ry); glEnd();
     }
@@ -142,7 +159,7 @@ void display()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     draw2DMap();
-    drawRays3D();
+    drawRays2D();
     drawPlayer();
     
     glutSwapBuffers();
