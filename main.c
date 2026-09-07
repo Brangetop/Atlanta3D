@@ -17,10 +17,10 @@ int mapX=8,mapY=8,mapS=64;
 int map[]=
 {
     1,1,1,1,1,1,1,1,
-    1,0,0,1,0,0,0,1,
-    1,0,0,1,0,2,2,1,
-    1,0,0,1,0,0,0,1,
     1,0,0,0,0,0,0,1,
+    1,0,0,0,0,2,2,1,
+    1,1,1,0,0,0,0,1,
+    1,0,0,1,0,0,0,1,
     1,0,0,0,0,2,0,1,
     1,0,0,0,0,0,0,1,
     1,1,1,1,1,1,1,1,
@@ -35,8 +35,11 @@ void draw2DMap()
         {
             if(map[y * mapX + x] == 1)
             {
-                glColor3f(1,1,1);
-            } else {
+                glColor3f(0.7,1,0.7);
+            } else if(map[y *mapX + x] == 2) {
+                glColor3f(1,0.7,0.7);
+            } else 
+            {
                 glColor3f(0,0,0);
             }
 
@@ -198,6 +201,10 @@ void display()
     glutSwapBuffers();
 }
 
+void resize(int w, int h)
+{
+    glutReshapeWindow(1024,512);
+}
 void buttons(unsigned char key, int x, int y)
 {
     if(key=='w')
@@ -227,6 +234,7 @@ void buttons(unsigned char key, int x, int y)
 
     glutPostRedisplay();
 }
+
 void init()
 {
     glClearColor(0.3,0.3,0.3,0);
@@ -244,6 +252,7 @@ int main(int argc, char* argv[])
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
     glutInitWindowSize(1024,512);
+    glutInitWindowPosition(200,200);
     glutCreateWindow("Atlanta3D");
 
     // wayland window size fix
@@ -251,6 +260,7 @@ int main(int argc, char* argv[])
 
     init();
     glutDisplayFunc(display); 
+    glutReshapeFunc(resize);
     glutKeyboardFunc(buttons);
     glutMainLoop();
 }
