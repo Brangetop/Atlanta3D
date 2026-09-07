@@ -19,9 +19,9 @@ int map[]=
     1,1,1,1,1,1,1,1,
     1,0,0,1,0,0,0,1,
     1,0,0,1,0,0,0,1,
-    1,0,0,1,0,0,0,1,
-    1,0,0,1,0,0,0,1,
     1,0,0,0,0,0,0,1,
+    1,0,0,0,0,0,0,1,
+    1,0,0,0,0,1,0,1,
     1,0,0,0,0,0,0,1,
     1,1,1,1,1,1,1,1,
 };
@@ -111,7 +111,7 @@ void drawRays2D()
             mx=(int)(rx)>>6; my=(int)(ry)>>6;
             mp=my*mapX+mx;
 
-            if(mp>0 && mp<mapX*mapY && map[mp]==1) { hx=rx; hy=ry; distH=dist(px,py,hx,hy,ra); dof=8; } // hit the wall
+            if(mp>0 && mp<mapX*mapY && map[mp]>0) { hx=rx; hy=ry; distH=dist(px,py,hx,hy,ra); dof=8; } // hit the wall
             else{ rx+=xo; ry+=yo; dof+=1; }
         }
         //drawing horizontal check line
@@ -142,7 +142,7 @@ void drawRays2D()
             mx=(int)(rx)>>6; my=(int)(ry)>>6;
             mp=my*mapX+mx;
 
-            if(mp > 0 && mp<mapX*mapY && map[mp]==1) { vx=rx; vy=ry; disV=dist(px,py,vx,vy,ra); dof=8; } // hit the wall
+            if(mp > 0 && mp<mapX*mapY && map[mp]>0) { vx=rx; vy=ry; disV=dist(px,py,vx,vy,ra); dof=8; } // hit the wall
             else{ rx+=xo; ry+=yo; dof+=1; }
         }
 
@@ -151,14 +151,26 @@ void drawRays2D()
             rx=vx;
             ry=vy;
             disT=disV;
+            glColor3f(0.1,0.7,0);
         } 
         else {
             rx=hx;
             ry=hy;
             disT=distH;
+            glColor3f(0.1,1,0);
         }
-        glColor3f(1,0,0); glLineWidth(1); glBegin(GL_LINES); glVertex2i(px,py); glVertex2i(rx,ry); glEnd();
+        glLineWidth(1); glBegin(GL_LINES); glVertex2i(px,py); glVertex2i(rx,ry); glEnd();
         
+        // ---- drawing 3d lines
+        // fisheye fix
+        float ca=pa-ra; if(ca<0){ ca+=2*PI; } if(ca>2*PI){ ca-=2*PI; } disT=disT*cos(ca);
+
+        float lineH=(mapS*320)/disT;
+        if(lineH>320){ lineH=320; }
+        
+        float lineO=160-lineH/2;
+        float offsetH=170;
+        glLineWidth(8);glBegin(GL_LINES);glVertex2i((r*8+350)+offsetH,lineO);glVertex2i((r*8+350)+offsetH,lineH+lineO);glEnd();
         ra+=DR;  if(ra<0){ ra+=2*PI; } if(ra>2*PI){ ra-=2*PI; }
     }
 }
