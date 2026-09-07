@@ -18,10 +18,10 @@ int map[]=
 {
     1,1,1,1,1,1,1,1,
     1,0,0,1,0,0,0,1,
+    1,0,0,1,0,2,2,1,
     1,0,0,1,0,0,0,1,
     1,0,0,0,0,0,0,1,
-    1,0,0,0,0,0,0,1,
-    1,0,0,0,0,1,0,1,
+    1,0,0,0,0,2,0,1,
     1,0,0,0,0,0,0,1,
     1,1,1,1,1,1,1,1,
 };
@@ -78,7 +78,7 @@ float dist(float ax, float ay, float bx, float by, float ang)
 
 void drawRays2D()
 {
-    int r,mx,my,mp,dof;
+    int r,mx,my,mp,dof,mv,mh;
     float rx,ry,ra,xo,yo,disT;
     ra=pa-DR*30; if(ra<0){ ra+=2*PI; } if(ra>2*PI){ ra-=2*PI; }
 
@@ -111,7 +111,7 @@ void drawRays2D()
             mx=(int)(rx)>>6; my=(int)(ry)>>6;
             mp=my*mapX+mx;
 
-            if(mp>0 && mp<mapX*mapY && map[mp]>0) { hx=rx; hy=ry; distH=dist(px,py,hx,hy,ra); dof=8; } // hit the wall
+            if(mp>0 && mp<mapX*mapY && map[mp]>0) { mh=map[mp]; hx=rx; hy=ry; distH=dist(px,py,hx,hy,ra); dof=8; } // hit the wall
             else{ rx+=xo; ry+=yo; dof+=1; }
         }
         //drawing horizontal check line
@@ -142,7 +142,7 @@ void drawRays2D()
             mx=(int)(rx)>>6; my=(int)(ry)>>6;
             mp=my*mapX+mx;
 
-            if(mp > 0 && mp<mapX*mapY && map[mp]>0) { vx=rx; vy=ry; disV=dist(px,py,vx,vy,ra); dof=8; } // hit the wall
+            if(mp > 0 && mp<mapX*mapY && map[mp]>0) { mv=map[mp]; vx=rx; vy=ry; disV=dist(px,py,vx,vy,ra); dof=8; } // hit the wall
             else{ rx+=xo; ry+=yo; dof+=1; }
         }
 
@@ -151,13 +151,26 @@ void drawRays2D()
             rx=vx;
             ry=vy;
             disT=disV;
-            glColor3f(0.1,0.7,0);
+            
+            glColor3f(0.1,1,0.1);
+            // "texturing"
+            if(mv==2)
+            {
+                glColor3f(1,0.1,0.1);
+            }
         } 
         else {
             rx=hx;
             ry=hy;
             disT=distH;
-            glColor3f(0.1,1,0);
+        
+            glColor3f(0.1,0.7,0.1);
+            // texturing
+            if(mh==2)
+            {
+                glColor3f(0.7,0.1,0.1);
+            }
+             
         }
         glLineWidth(1); glBegin(GL_LINES); glVertex2i(px,py); glVertex2i(rx,ry); glEnd();
         
