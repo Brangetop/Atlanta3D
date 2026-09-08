@@ -1,1 +1,0 @@
-First attempt in making a raycast engine. Uses SFML2 library for graphics and has only 2D rendering. 
