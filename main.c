@@ -157,6 +157,10 @@ void init()
  pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa)); 
 }
 
+void resize(int w, int h)
+{
+    glutReshapeWindow(1024,512);
+}
 void display()
 {   
  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
@@ -174,6 +178,7 @@ int main(int argc, char* argv[])
  glutCreateWindow("Atlanta3D");
  init();
  glutDisplayFunc(display);
+ glutReshapeFunc(resize);
  glutKeyboardFunc(Buttons);
  glutMainLoop();
 }
