@@ -24,6 +24,9 @@ typedef struct main
     int w,a,s,d;
 }ButtonKeys; ButtonKeys Keys;
 
+float sensitivityLR = 0.2;
+float sensitivityMV = 0.2;
+
 void drawMap2D()
 {
     int x,y,xo,yo;
@@ -43,9 +46,8 @@ void drawMap2D()
     } 
 }
 
-
-float degToRad(int a) { return a*M_PI/180.0;}
-int FixAng(int a)
+float degToRad(float a) { return a*M_PI/180.0;}
+float FixAng(float a)
 {
     if(a>359){ a-=360;}
     if(a<0){ a+=360;}
@@ -155,6 +157,9 @@ void drawRays2D()
     }
 }
 
+//initialization
+float frame1,frame2,fps;
+
 void init()
 {
  glClearColor(0.3,0.3,0.3,0);
@@ -163,28 +168,91 @@ void init()
  pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa)); 
 }
 
+void ButtonDown(unsigned char key,int x,int y)
+{
+    if(key=='w')
+    {
+        Keys.w=1;
+    }
+    if(key=='a')
+    {
+        Keys.a=1;
+    }
+    if(key=='s')
+    {
+        Keys.s=1;
+    }
+    if(key=='d')
+    {
+        Keys.d=1;
+    }
+
+    glutPostRedisplay;
+}
+
+void ButtonUp(unsigned char key,int x,int y)
+{
+    if(key=='w')
+    {
+        Keys.w=0;
+    }
+    if(key=='a')
+    {
+        Keys.a=0;
+    }
+    if(key=='s')
+    {
+        Keys.s=0;
+    }
+    if(key=='d')
+    {
+        Keys.d=0;
+    }
+
+    glutPostRedisplay;
+}
+
+
 void resize(int w, int h)
 {
     glutReshapeWindow(1024,512);
 }
+
 void display()
-{   
- glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
- drawMap2D();
- drawPlayer2D();
- drawRays2D();
- glutSwapBuffers();  
+{
+    frame2=glutGet(GLUT_ELAPSED_TIME);
+    fps=(frame2-frame1);
+    frame1=glutGet(GLUT_ELAPSED_TIME);
+    
+
+    if(Keys.a==1){ pa+=sensitivityLR*fps; pa=FixAng(pa); pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa));} 	
+    if(Keys.d==1){ pa-=sensitivityLR*fps; pa=FixAng(pa); pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa));} 
+    if(Keys.w==1){ px+=pdx*sensitivityMV*fps; py+=pdy*sensitivityMV*fps;}
+    if(Keys.s==1){ px-=pdx*sensitivityMV*fps; py-=pdy*sensitivityMV*fps;}
+
+    glutPostRedisplay();
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+    drawMap2D();
+    drawPlayer2D();
+    drawRays2D();
+    glutSwapBuffers();  
 }
 
 int main(int argc, char* argv[])
 { 
- glutInit(&argc, argv);
- glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
- glutInitWindowSize(1024,512);
- glutCreateWindow("Atlanta3D");
- init();
- glutDisplayFunc(display);
- glutReshapeFunc(resize);
- glutKeyboardFunc(Buttons);
- glutMainLoop();
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInitWindowSize(1024,512);
+    glutCreateWindow("Atlanta3D");
+    init();
+    glutDisplayFunc(display);
+    glutReshapeFunc(resize);
+
+    // older key handling
+    // MAKE A BUILD FLAG FOR TS
+    //glutKeyboardFunc(Buttons);
+    glutKeyboardFunc(ButtonDown);
+    glutKeyboardUpFunc(ButtonUp);
+    glutMainLoop();
 }
