@@ -18,6 +18,12 @@ int map[]=
     1,1,1,1,1,1,1,1,	
 };
 
+typedef struct main
+{
+    /* data */
+    int w,a,s,d;
+}ButtonKeys; ButtonKeys Keys;
+
 void drawMap2D()
 {
     int x,y,xo,yo;
@@ -174,7 +180,7 @@ int main(int argc, char* argv[])
 { 
  glutInit(&argc, argv);
  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
- glutInitWindowSize(1024,510);
+ glutInitWindowSize(1024,512);
  glutCreateWindow("Atlanta3D");
  init();
  glutDisplayFunc(display);
