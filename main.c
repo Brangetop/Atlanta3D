@@ -11,10 +11,10 @@ int map[]=
     1,1,1,1,1,1,1,1,
     1,0,1,0,0,0,0,1,
     1,0,1,0,0,1,1,1,
-    1,0,1,1,0,0,0,1,
+    1,0,1,1,0,1,0,1,
     1,0,0,0,0,0,0,1,
-    1,0,0,0,0,1,0,1,
-    1,0,0,0,0,0,0,1,
+    1,0,0,1,0,1,0,1,
+    1,0,0,1,0,0,0,1,
     1,1,1,1,1,1,1,1,	
 };
 
@@ -84,8 +84,9 @@ void Buttons(unsigned char key,int x,int y)
 
 void drawRays2D()
 {
-    glColor3f(0,1,1); glBegin(GL_QUADS); glVertex2i(526,  0); glVertex2i(1006,  0); glVertex2i(1006,160); glVertex2i(526,160); glEnd();	
-    glColor3f(0,0,1); glBegin(GL_QUADS); glVertex2i(526,160); glVertex2i(1006,160); glVertex2i(1006,320); glVertex2i(526,320); glEnd();	 	
+    // rendering background
+    glColor3f(0.4f, 0.18f, 0.05f); glBegin(GL_QUADS); glVertex2i(526,  0); glVertex2i(1006,  0); glVertex2i(1006,160); glVertex2i(526,160); glEnd();	
+    glColor3f(0.15f, 0.25f, 0.15f); glBegin(GL_QUADS); glVertex2i(526,160); glVertex2i(1006,160); glVertex2i(1006,320); glVertex2i(526,320); glEnd();	 	
         
     int r,mx,my,mp,dof,side; float vx,vy,rx,ry,ra,xo,yo,disV,disH; 
     
@@ -225,10 +226,27 @@ void display()
     frame1=glutGet(GLUT_ELAPSED_TIME);
     
 
+    
+    int xo=0; if(pdx<0) { xo=-20; } else { xo=20; }
+    int yo=0; if(pdy<0) { yo=-20; } else { yo=20; }
+    int ipx=px/64.0, ipxa_xo=(px+xo)/64.0, ipxs_xo=(px-xo)/64.0;
+    int ipy=py/64.0, ipya_yo=(py+yo)/64.0, ipys_yo=(py-yo)/64.0;
+    
     if(Keys.a==1){ pa+=sensitivityLR*fps; pa=FixAng(pa); pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa));} 	
     if(Keys.d==1){ pa-=sensitivityLR*fps; pa=FixAng(pa); pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa));} 
-    if(Keys.w==1){ px+=pdx*sensitivityMV*fps; py+=pdy*sensitivityMV*fps;}
-    if(Keys.s==1){ px-=pdx*sensitivityMV*fps; py-=pdy*sensitivityMV*fps;}
+    
+    if(Keys.w==1)
+    {  
+        if(map[ipy*mapX+ipxa_xo]==0){ px+=pdx*0.2*fps;}
+        if(map[ipya_yo*mapX+ipx]==0){ py+=pdy*0.2*fps;}
+    }
+    if(Keys.s==1)
+    {  
+        if(map[ipy*mapX+ipxs_xo]==0){ px-=pdx*0.2*fps;}
+        if(map[ipys_yo*mapX+ipx]==0){ py-=pdy*0.2*fps;}
+    }
+    
+
 
     glutPostRedisplay();
 
