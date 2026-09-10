@@ -3,6 +3,8 @@
 
 #include <GL/glut.h>
 
+#include "textures.h"
+
 #define mapX  8
 #define mapY  8
 #define mapS 64
@@ -144,8 +146,10 @@ void drawRays2D()
         } 
         
         //draw the shortest one
+
+        float shade=1;
         glColor3f(0,0.8,0);
-        if(disV<disH){ rx=vx; ry=vy; disH=disV; glColor3f(0,0.6,0);}
+        if(disV<disH){ shade=0.5; rx=vx; ry=vy; disH=disV; glColor3f(0,0.6,0);}
         glLineWidth(2); glBegin(GL_LINES); glVertex2i(px,py); glVertex2i(rx,ry); glEnd();
         
         // draw 3D
@@ -153,7 +157,15 @@ void drawRays2D()
         int lineH = (mapS*320)/(disH); if(lineH>320){ lineH=320;}
         int lineOff = 160 - (lineH>>1);
         
-        glLineWidth(8);glBegin(GL_LINES);glVertex2i(r*8+530,lineOff);glVertex2i(r*8+530,lineOff+lineH);glEnd();
+        int i;
+        float ty = 0;
+        float ty_step=32.0/(float)lineH;
+        for(i=0;i<=lineH;i++) {
+            float c=All_Textures[(int)(ty)*32]*shade;
+            glColor3f(c,c,c);
+            glPointSize(8);glBegin(GL_POINTS);glVertex2i(r*8+530,i+lineOff);glEnd();
+            ty+=ty_step;
+        }
 
         ra=FixAng(ra-1);
     }
