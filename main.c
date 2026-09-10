@@ -6,6 +6,7 @@
 #define mapX  8
 #define mapY  8
 #define mapS 64
+
 int map[]=
 {
     1,1,1,1,1,1,1,1,
