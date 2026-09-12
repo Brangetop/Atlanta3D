@@ -172,14 +172,18 @@ void drawRays2D()
         float tx;
         if(shade==1)
         {
-            tx=(int)(rx/2)%32; if (ra>180){tx=32-tx;}   
+            tx=(int)floor(rx/2)%32; if (ra>180){tx=31-tx;}   
         } 
         else 
         {
-            tx=(int)(ry/2)%32; if (ra>90&&ra<270){tx=32-tx;} 
+            tx=(int)floor(ry/2)%32; if (ra>90&&ra<270){tx=31-tx;} 
         }
 
-        ty+=32;
+        // temporary bug fix
+        if(tx < 0)  tx = 0;
+        if(tx > 31) tx = 31;
+
+        ty+=0;
         for(i=0;i<lineH;i++) {
             float c=All_Textures[(int)(ty)*32+(int)(tx)]*shade;
             glColor3f(c,c,c);
@@ -187,6 +191,7 @@ void drawRays2D()
             ty+=ty_step;
         }
 
+        
         ra=FixAng(ra-1);
     }
 }
