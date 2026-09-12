@@ -9,6 +9,9 @@
 #define mapY  8
 #define mapS 64
 
+//#define M_PI M_PI
+// so my compiler doesnt argue witch me
+
 int map[]=
 {
     1,1,1,1,1,1,1,1,
@@ -88,8 +91,11 @@ void Buttons(unsigned char key,int x,int y)
 void drawRays2D()
 {
     // rendering background
-    glColor3f(0.4f, 0.18f, 0.05f); glBegin(GL_QUADS); glVertex2i(526,  0); glVertex2i(1006,  0); glVertex2i(1006,160); glVertex2i(526,160); glEnd();	
-    glColor3f(0.15f, 0.25f, 0.15f); glBegin(GL_QUADS); glVertex2i(526,160); glVertex2i(1006,160); glVertex2i(1006,320); glVertex2i(526,320); glEnd();	 	
+    glColor3f(1, 0.3, 0.1); glBegin(GL_QUADS); glVertex2i(526,  0); glVertex2i(1006,  0);
+    glVertex2i(1006,160); glVertex2i(526,160); glEnd();	
+
+    glColor3f(0.25, 0.75, 0.15); glBegin(GL_QUADS); glVertex2i(526,160); glVertex2i(1006,160); 
+    glVertex2i(1006,320); glVertex2i(526,320); glEnd();	 	
         
     int r,mx,my,mp,dof,side; float vx,vy,rx,ry,ra,xo,yo,disV,disH; 
     
@@ -154,14 +160,28 @@ void drawRays2D()
         
         // draw 3D
         int ca=FixAng(pa-ra); disH=disH*cos(degToRad(ca)); // fisheye fix
-        int lineH = (mapS*320)/(disH); if(lineH>320){ lineH=320;}
-        int lineOff = 160 - (lineH>>1);
+        int lineH=(mapS*320)/(disH); 
+        
+        float ty_step=32.0/(float)lineH;
+        float offset=0;
+        if(lineH>320){ offset=(lineH-320)/2.0; lineH=320; }
+        int lineOff=160-(lineH>>1);
         
         int i;
-        float ty = 0;
-        float ty_step=32.0/(float)lineH;
-        for(i=0;i<=lineH;i++) {
-            float c=All_Textures[(int)(ty)*32]*shade;
+        float ty=offset*ty_step;
+        float tx;
+        if(shade==1)
+        {
+            tx=(int)(rx/2)%32; if (ra>180){tx=32-tx;}   
+        } 
+        else 
+        {
+            tx=(int)(ry/2)%32; if (ra>90&&ra<270){tx=32-tx;} 
+        }
+
+        ty+=32;
+        for(i=0;i<lineH;i++) {
+            float c=All_Textures[(int)(ty)*32+(int)(tx)]*shade;
             glColor3f(c,c,c);
             glPointSize(8);glBegin(GL_POINTS);glVertex2i(r*8+530,i+lineOff);glEnd();
             ty+=ty_step;
