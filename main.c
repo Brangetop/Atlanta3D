@@ -7,7 +7,7 @@
 
 #define mapX  8
 #define mapY  8
-#define mapS 64
+#define mapS mapX*mapY
 
 //#define M_PI M_PI
 // so my compiler doesnt argue witch me
@@ -53,6 +53,7 @@ void drawMap2D()
         for(x=0;x<mapX;x++)
         {
             if(mapW[y*mapX+x]>0){ glColor3f(1,1,1);} else{ glColor3f(0,0,0);}
+            if(mapW[y*mapX+x]==4) { glColor3f(1,0.7,0.3); } // different color for doors in debug window
             xo=x*mapS; yo=y*mapS;
             glBegin(GL_QUADS); 
             glVertex2i( 0   +xo+1, 0   +yo+1); 
@@ -214,11 +215,18 @@ void drawRays2D()
         for(y=lineOff+lineH;y<320;y++)
         {
             float dy=y-(320/2.0), deg=degToRad(ra), raFix=cos(degToRad(FixAng(pa-ra)));
+
             tx=px/2 + cos(deg)*158*32/dy/raFix;
             ty=py/2 - sin(deg)*158*32/dy/raFix;
             int mp=mapF[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
             float c=All_Textures[((int)(ty)&31)*32 + ((int)(tx)&31)+mp]*0.7;
-            glColor3f(c/1.3,c,c/1.3);glPointSize(8);glBegin(GL_POINTS);glVertex2i(r*8+530,y);glEnd();
+
+            glColor3f(c*0.7,c,c*0.7);
+
+            int tile_type=mapF[(int)(ty/32.0)*mapX+(int)(tx/32.0)];
+            if(tile_type==1) { glColor3f(c,c*0.9,c*0.5); } // differet color for "planks" 
+            
+            glPointSize(8);glBegin(GL_POINTS);glVertex2i(r*8+530,y);glEnd();
         }
         ra=FixAng(ra-1);
     }
