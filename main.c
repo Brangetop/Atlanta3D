@@ -86,7 +86,8 @@ float FixAng(float a)
     return a;
 }
 
-float px,py,pdx,pdy,pa;
+float px,py,pdx,pdy,pa,pmom_f,pmom_b,mom_multiplier;
+
 
 void drawPlayer2D()
 {
@@ -270,7 +271,8 @@ void ButtonDown(unsigned char key,int x,int y)
     if(key=='w')
     {
         Keys.w=1;
-    }
+        pmom_f=1;
+    } 
     if(key=='a')
     {
         Keys.a=1;
@@ -278,6 +280,7 @@ void ButtonDown(unsigned char key,int x,int y)
     if(key=='s')
     {
         Keys.s=1;
+        pmom_b=1;
     }
     if(key=='d')
     {
@@ -350,7 +353,21 @@ void display()
         if(mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*0.2*fps;}
         if(mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*0.2*fps;}
     }
-    
+    if((Keys.w==0 & Keys.s==0)&pmom_b>0)
+    {
+        if(pmom_b-0.1==0) { pmom_b=0; }
+        if(mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*0.2*fps*pmom_b*mom_multiplier;}
+        if(mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*0.2*fps*pmom_b;}
+        pmom_b-=0.1;
+    }
+
+    if((Keys.w==0 & Keys.s==0)&pmom_f>0)
+    {
+        if(pmom_f-0.07==0) { pmom_f=0; }
+        if(mapW[ipy*mapX+ipxa_xo]==0){ px+=pdx*0.2*fps*pmom_f;}
+        if(mapW[ipya_yo*mapX+ipx]==0){ py+=pdy*0.2*fps*pmom_f;}
+        pmom_f-=0.07;
+    }
 
 
     glutPostRedisplay();
@@ -364,6 +381,7 @@ void display()
 
 int main(int argc, char* argv[])
 { 
+    mom_multiplier=0.9;
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(1024,512);
