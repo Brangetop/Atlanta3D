@@ -12,15 +12,27 @@
 //#define M_PI M_PI
 // so my compiler doesnt argue witch me
 
-int map[]=
+int mapW[]=
 {
-    1,1,1,1,1,1,1,1,
-    1,0,1,0,0,0,0,1,
-    1,0,1,0,0,1,1,1,
-    1,0,1,1,0,1,0,1,
+    2,2,2,2,2,1,1,1,
+    2,0,0,0,2,0,0,1,
+    2,0,0,0,2,0,0,1,
+    2,2,2,4,2,0,0,1,
+    1,0,0,0,0,0,0,3,
+    1,0,0,0,0,0,0,3,
     1,0,0,0,0,0,0,1,
-    1,0,0,1,0,1,0,1,
-    1,0,0,1,0,0,0,1,
+    1,1,1,1,1,1,1,1,	
+};
+
+int mapF[]=
+{
+    0,2,2,2,2,1,1,0,
+    2,1,1,1,2,2,2,1,
+    2,1,1,1,2,2,2,1,
+    2,2,2,1,2,2,2,1,
+    1,0,0,0,0,0,0,3,
+    1,0,0,0,0,1,0,3,
+    1,0,0,0,0,0,0,1,
     1,1,1,1,1,1,1,1,	
 };
 
@@ -40,7 +52,7 @@ void drawMap2D()
     {
         for(x=0;x<mapX;x++)
         {
-            if(map[y*mapX+x]==1){ glColor3f(1,1,1);} else{ glColor3f(0,0,0);}
+            if(mapW[y*mapX+x]>0){ glColor3f(1,1,1);} else{ glColor3f(0,0,0);}
             xo=x*mapS; yo=y*mapS;
             glBegin(GL_QUADS); 
             glVertex2i( 0   +xo+1, 0   +yo+1); 
@@ -91,10 +103,10 @@ void Buttons(unsigned char key,int x,int y)
 void drawRays2D()
 {
     // rendering background
-    glColor3f(1, 0.3, 0.1); glBegin(GL_QUADS); glVertex2i(526,  0); glVertex2i(1006,  0);
+    glColor3f(0.0f, 0.75f, 1.0f); glBegin(GL_QUADS); glVertex2i(526,  0); glVertex2i(1006,  0);
     glVertex2i(1006,160); glVertex2i(526,160); glEnd();	
 
-    glColor3f(0.25, 0.75, 0.15); glBegin(GL_QUADS); glVertex2i(526,160); glVertex2i(1006,160); 
+    glColor3f(0.2f, 0.7f, 0.2f); glBegin(GL_QUADS); glVertex2i(526,160); glVertex2i(1006,160); 
     glVertex2i(1006,320); glVertex2i(526,320); glEnd();	 	
         
     int r,mx,my,mp,dof,side; float vx,vy,rx,ry,ra,xo,yo,disV,disH; 
@@ -103,10 +115,11 @@ void drawRays2D()
     
     for(r=0;r<60;r++)
     {
+        int vmt=0,hmt=0;
         dof=0; side=0; disV=100000;
         float Tan=tan(degToRad(ra));
 
-        // horizontal rays
+        // vertical rays
         if(cos(degToRad(ra))> 0.001)
         { 
             rx=(((int)px>>6)<<6)+64;
@@ -123,12 +136,12 @@ void drawRays2D()
         while(dof<8)
         { 
             mx=(int)(rx)>>6; my=(int)(ry)>>6; mp=my*mapX+mx;                     
-            if(mp>0 && mp<mapX*mapY && map[mp]==1){ dof=8; disV=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);}//hit    
+            if(mp>0 && mp<mapX*mapY && mapW[mp]>0){ vmt=mapW[mp]-1; dof=8; disV=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);}//hit    
             else{ rx+=xo; ry+=yo; dof+=1;}
         } 
         vx=rx; vy=ry;
 
-        //vertical rays
+        //horizontal rays
         dof=0; disH=100000;
         Tan=1.0/Tan; 
         if(sin(degToRad(ra))> 0.001){ 
@@ -147,7 +160,7 @@ void drawRays2D()
         while(dof<8) 
         { 
             mx=(int)(rx)>>6; my=(int)(ry)>>6; mp=my*mapX+mx;                          
-            if(mp>0 && mp<mapX*mapY && map[mp]==1){ dof=8; disH=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);}//hit        
+            if(mp>0 && mp<mapX*mapY && mapW[mp]>0){ hmt=mapW[mp]-1; dof=8; disH=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);}//hit        
             else{ rx+=xo; ry+=yo; dof+=1;}
         } 
         
@@ -155,7 +168,7 @@ void drawRays2D()
 
         float shade=1;
         glColor3f(0,0.8,0);
-        if(disV<disH){ shade=0.5; rx=vx; ry=vy; disH=disV; glColor3f(0,0.6,0);}
+        if(disV<disH){ hmt=vmt; shade=0.5; rx=vx; ry=vy; disH=disV; glColor3f(0,0.6,0);}
         glLineWidth(2); glBegin(GL_LINES); glVertex2i(px,py); glVertex2i(rx,ry); glEnd();
         
         // draw 3D
@@ -167,8 +180,9 @@ void drawRays2D()
         if(lineH>320){ offset=(lineH-320)/2.0; lineH=320; }
         int lineOff=160-(lineH>>1);
         
-        int i;
-        float ty=offset*ty_step;
+        // --- Draw walls ---
+        int y;
+        float ty=offset*ty_step+hmt*32;
         float tx;
         if(shade==1)
         {
@@ -180,18 +194,32 @@ void drawRays2D()
         }
 
         // temporary bug fix
-        if(tx < 0)  tx = 0;
-        if(tx > 31) tx = 31;
+        /*if(tx < 0)  tx = 0;
+        if(tx > 31) tx = 31; */
 
-        ty+=0;
-        for(i=0;i<lineH;i++) {
+        // ty+=32;
+        for(y=0;y<lineH;y++) {
             float c=All_Textures[(int)(ty)*32+(int)(tx)]*shade;
-            glColor3f(c,c,c);
-            glPointSize(8);glBegin(GL_POINTS);glVertex2i(r*8+530,i+lineOff);glEnd();
+            if(hmt==0) { glColor3f(c/2,c/2,c/2);} // red
+            if(hmt==1) { glColor3f(0.70*c, 0.20*c, 0.15*c);} // brown bricks
+            if(hmt==2) { glColor3f(0.50*c, 0.70*c, 0.85*c);} // windowish blue
+            if(hmt==3) { glColor3f(0.65*c, 0.50*c, 0.3*c);} // wooden door
+            
+            
+            glPointSize(8);glBegin(GL_POINTS);glVertex2i(r*8+530,y+lineOff);glEnd();
             ty+=ty_step;
         }
 
-        
+        // --- Draw floors ---
+        for(y=lineOff+lineH;y<320;y++)
+        {
+            float dy=y-(320/2.0), deg=degToRad(ra), raFix=cos(degToRad(FixAng(pa-ra)));
+            tx=px/2 + cos(deg)*158*32/dy/raFix;
+            ty=py/2 - sin(deg)*158*32/dy/raFix;
+            int mp=mapF[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
+            float c=All_Textures[((int)(ty)&31)*32 + ((int)(tx)&31)+mp]*0.7;
+            glColor3f(c/1.3,c,c/1.3);glPointSize(8);glBegin(GL_POINTS);glVertex2i(r*8+530,y);glEnd();
+        }
         ra=FixAng(ra-1);
     }
 }
@@ -224,6 +252,16 @@ void ButtonDown(unsigned char key,int x,int y)
     if(key=='d')
     {
         Keys.d=1;
+    }
+
+    if(key=='e') { 
+        int xo=0; if(pdx<0) { xo=-25; } else { xo=25; }
+        int yo=0; if(pdy<0) { yo=-25; } else { yo=25; }
+
+        int ipx=px/64.0, ipxa_xo=(px+xo)/64.0;
+        int ipy=py/64.0, ipya_yo=(py+yo)/64.0;
+
+        if(mapW[ipya_yo*mapX+ipxa_xo]==4) { mapW[ipya_yo*mapX+ipxa_xo]=0;}
     }
 
     glutPostRedisplay;
@@ -275,13 +313,13 @@ void display()
     
     if(Keys.w==1)
     {  
-        if(map[ipy*mapX+ipxa_xo]==0){ px+=pdx*0.2*fps;}
-        if(map[ipya_yo*mapX+ipx]==0){ py+=pdy*0.2*fps;}
+        if(mapW[ipy*mapX+ipxa_xo]==0){ px+=pdx*0.2*fps;}
+        if(mapW[ipya_yo*mapX+ipx]==0){ py+=pdy*0.2*fps;}
     }
     if(Keys.s==1)
     {  
-        if(map[ipy*mapX+ipxs_xo]==0){ px-=pdx*0.2*fps;}
-        if(map[ipys_yo*mapX+ipx]==0){ py-=pdy*0.2*fps;}
+        if(mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*0.2*fps;}
+        if(mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*0.2*fps;}
     }
     
 
