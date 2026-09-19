@@ -36,6 +36,18 @@ int mapF[]=
     1,1,1,1,1,1,1,1,	
 };
 
+int mapC[]=
+{
+    0,2,2,2,2,1,1,0,
+    2,1,1,1,2,2,2,1,
+    2,1,1,1,2,2,2,1,
+    2,2,2,1,2,2,2,1,
+    1,0,0,0,0,0,0,3,
+    1,0,0,0,0,1,0,3,
+    1,0,0,0,0,0,0,1,
+    1,1,1,1,1,1,1,1,	
+};
+
 typedef struct main
 {
     /* data */
@@ -211,22 +223,28 @@ void drawRays2D()
             ty+=ty_step;
         }
 
-        // --- Draw floors ---
+        // --- Draw floors and roof ---
         for(y=lineOff+lineH;y<320;y++)
         {
             float dy=y-(320/2.0), deg=degToRad(ra), raFix=cos(degToRad(FixAng(pa-ra)));
-
+        
             tx=px/2 + cos(deg)*158*32/dy/raFix;
             ty=py/2 - sin(deg)*158*32/dy/raFix;
+
             int mp=mapF[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
             float c=All_Textures[((int)(ty)&31)*32 + ((int)(tx)&31)+mp]*0.7;
-
             glColor3f(c*0.7,c,c*0.7);
-
-            int tile_type=mapF[(int)(ty/32.0)*mapX+(int)(tx/32.0)];
-            if(tile_type==1) { glColor3f(c,c*0.9,c*0.5); } // differet color for "planks" 
-            
+            int tile_type=mapF[(int)(ty/32.0)*mapX+(int)(tx/32.0)]+1;
+            if(tile_type==2) { glColor3f(c,c*0.9,c*0.5); } // differet color for "planks" 
             glPointSize(8);glBegin(GL_POINTS);glVertex2i(r*8+530,y);glEnd();
+
+            // draw tha roof
+            mp=mapC[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
+            c=All_Textures[((int)(ty)&31)*32 + ((int)(tx)&31)+mp]*0.4;
+            glColor3f(c*0.7,c*0.7,c);
+            tile_type=mapC[(int)(ty/32.0)*mapX+(int)(tx/32.0)];
+            if(tile_type==1) { glColor3f(c,c*0.9,c*0.5); } // differet color for "planks" 
+            glPointSize(8);glBegin(GL_POINTS);glVertex2i(r*8+530,320-y);glEnd();
         }
         ra=FixAng(ra-1);
     }
@@ -296,7 +314,6 @@ void ButtonUp(unsigned char key,int x,int y)
 
     glutPostRedisplay;
 }
-
 
 void resize(int w, int h)
 {
