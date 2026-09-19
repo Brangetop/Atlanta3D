@@ -346,7 +346,7 @@ int main(int argc, char* argv[])
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(1024,512);
-    glutCreateWindow("Atlanta3D");
+    glutCreateWindow("Atlanta3D Engine");
     init();
     glutDisplayFunc(display);
     glutReshapeFunc(resize);

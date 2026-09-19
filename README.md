@@ -1,6 +1,9 @@
-Atlanta 3D - 2.5D(dont ask) engine that replicates ID Tech 1
+# Atlanta 3D - 2.5D(dont ask) raycaster engine. Written in C and OpenGL.
 
-WIP
+## Features:
+- Wall texturing
+- Floor texturing
+- nothin more for now 
 
-Huge thanks for help with this project:
+## Huge thanks for the help with this project:
 - 3D Sage Youtube channel for some amazing tutorials and textures
