@@ -43,7 +43,7 @@ int mapC[]=
     2,1,1,1,2,2,2,1,
     2,2,2,1,2,2,2,1,
     1,99,99,99,99,99,99,3,
-    1,99,99,99,99,1,99,3,
+    1,99,99,99,99,99,99,3,
     1,99,99,99,99,99,99,1,
     1,1,1,1,1,1,1,1,	
 };
@@ -236,7 +236,7 @@ void drawRays2D()
             glColor3f(c*0.7,c,c*0.7);
             int tile_type=mapF[(int)(ty/32.0)*mapX+(int)(tx/32.0)];
             // no roof logic
-            if(tile_type==99) { continue; }
+            //if(tile_type==99) { continue; }
             if(tile_type==1) { glColor3f(c,c*0.9,c*0.5); } // differet color for "planks" 
             glPointSize(8);glBegin(GL_POINTS);glVertex2i(r*8+530,y);glEnd();
 

@@ -1,9 +1,9 @@
-# Atlanta 3D - 2.5D(dont ask) raycaster engine. Written in C and OpenGL.
+# Atlanta 3D - 2.5D(dont ask) raycaster engine. Written in C and OpenGL/FreeGLUT. 
 
 ## Features:
-- Wall texturing
-- Floor texturing
-- nothin more for now 
+* Wall texturing
+* Floor texturing
+* nothin more for now 
 
 ## Huge thanks for the help with this project:
-- 3D Sage Youtube channel for some amazing tutorials and textures
+* 3D Sage Youtube channel for some amazing tutorials and textures
