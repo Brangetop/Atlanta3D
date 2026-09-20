@@ -349,15 +349,21 @@ void display()
     if(Keys.w==1)
     {  
         pmom_f=1;
-        if(mapW[ipy*mapX+ipxa_xo]==0){ px+=pdx*0.2*fps;}
-        if(mapW[ipya_yo*mapX+ipx]==0){ py+=pdy*0.2*fps;}
+        if(pmom_accel<1) { pmom_accel+=0.005*fps; }
+        if(pmom_accel>1) { pmom_accel=1; }
+        if(mapW[ipy*mapX+ipxa_xo]==0){ px+=pdx*0.2*fps*pmom_accel;}
+        if(mapW[ipya_yo*mapX+ipx]==0){ py+=pdy*0.2*fps*pmom_accel;}
     }
-    if(Keys.s==1)
+    else if(Keys.s==1)
     {  
         pmom_b=1;
-        if(mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*0.2*fps;}
-        if(mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*0.2*fps;}
+        if(pmom_accel<1) { pmom_accel+=0.005*fps; }
+        if(pmom_accel>1) { pmom_accel=1; }
+        if(mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*0.2*fps*pmom_accel;}
+        if(mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*0.2*fps*pmom_accel;}
     }
+    else { pmom_accel=0; }
+
     if((Keys.w==0 & Keys.s==0)&pmom_b>0)
     {
         if(pmom_b-0.1==0) { pmom_b=0; }
