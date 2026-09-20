@@ -362,7 +362,11 @@ void display()
         if(mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*0.2*fps*pmom_accel;}
         if(mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*0.2*fps*pmom_accel;}
     }
-    else { pmom_accel=0; }
+    else 
+    { 
+        if(pmom_f==1) { pmom_f=pmom_accel; } if(pmom_b==1) { pmom_b=pmom_accel; }
+        pmom_accel=0; 
+    }
 
     if((Keys.w==0 & Keys.s==0)&pmom_b>0)
     {
