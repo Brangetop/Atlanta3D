@@ -357,15 +357,15 @@ void display()
     {
         if(pmom_b-0.1==0) { pmom_b=0; }
         if(mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*0.2*fps*pmom_b*mom_multiplier;}
-        if(mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*0.2*fps*pmom_b;}
+        if(mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*0.2*fps*pmom_b*mom_multiplier;}
         pmom_b-=0.1;
     }
 
     if((Keys.w==0 & Keys.s==0)&pmom_f>0)
     {
         if(pmom_f-0.07==0) { pmom_f=0; }
-        if(mapW[ipy*mapX+ipxa_xo]==0){ px+=pdx*0.2*fps*pmom_f;}
-        if(mapW[ipya_yo*mapX+ipx]==0){ py+=pdy*0.2*fps*pmom_f;}
+        if(mapW[ipy*mapX+ipxa_xo]==0){ px+=pdx*0.2*fps*pmom_f*mom_multiplier;}
+        if(mapW[ipya_yo*mapX+ipx]==0){ py+=pdy*0.2*fps*pmom_f*mom_multiplier;}
         pmom_f-=0.07;
     }
 
