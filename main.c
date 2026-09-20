@@ -86,7 +86,12 @@ float FixAng(float a)
     return a;
 }
 
-float px,py,pdx,pdy,pa,pmom_f,pmom_b,mom_multiplier;
+float px,py,pdx,pdy,pa;
+
+// momentum system related variables
+// will be replaced with speed when i feel like it
+float pmom_f,pmom_b,mom_multiplier;
+float pmom_accel = 0.0;
 
 
 void drawPlayer2D()
@@ -271,7 +276,6 @@ void ButtonDown(unsigned char key,int x,int y)
     if(key=='w')
     {
         Keys.w=1;
-        pmom_f=1;
     } 
     if(key=='a')
     {
@@ -280,7 +284,6 @@ void ButtonDown(unsigned char key,int x,int y)
     if(key=='s')
     {
         Keys.s=1;
-        pmom_b=1;
     }
     if(key=='d')
     {
@@ -345,11 +348,13 @@ void display()
     
     if(Keys.w==1)
     {  
+        pmom_f=1;
         if(mapW[ipy*mapX+ipxa_xo]==0){ px+=pdx*0.2*fps;}
         if(mapW[ipya_yo*mapX+ipx]==0){ py+=pdy*0.2*fps;}
     }
     if(Keys.s==1)
     {  
+        pmom_b=1;
         if(mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*0.2*fps;}
         if(mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*0.2*fps;}
     }
