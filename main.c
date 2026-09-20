@@ -3,52 +3,50 @@
 
 #include <GL/glut.h>
 
-//#include "textures.h"
-#include "textures/32pm.ppm"
+#include "textures/textures32.ppm"
+#include "textures/skybox.ppm"
 
 #define mapX  8
 #define mapY  8
 #define mapS mapX*mapY
 #define doorValue 3
 
-//#define M_PI M_PI
-// so my compiler doesnt argue witch me
-
 int mapW[]=
 {
-    2,2,2,2,2,1,1,1,
-    2,0,0,0,5,0,0,1,
-    2,0,0,0,5,0,0,1,
-    2,5,5,doorValue,5,0,0,1,
+    2,2,2,2,2,2,2,2,
     2,0,0,0,0,0,0,2,
+    2,0,0,0,0,0,0,doorValue,
     2,0,0,0,0,0,0,2,
-    2,0,0,0,0,0,0,2,
-    2,2,2,2,2,2,2,2,	
+    2,5,5,doorValue,5,0,0,2,
+    5,0,0,0,5,0,0,2,
+    5,0,0,0,5,0,0,2,
+    2,5,5,5,2,2,2,2,	
 };
 
 int mapF[]=
 {
     3,3,3,3,3,1,1,1,
-    3,5,5,5,3,7,7,1,
-    3,5,5,5,3,7,7,1,
-    3,3,3,5,3,7,7,1,
-    3,3,3,3,3,3,3,3,
-    3,3,3,3,3,3,3,3,
-    3,3,3,3,3,3,3,3,
+    3,3,3,3,3,3,3,1,
+    3,3,3,7,7,7,7,1,
+    3,3,3,7,3,3,3,1,
+    3,3,3,5,3,3,3,3,
+    3,5,5,5,3,3,3,3,
+    3,5,5,5,3,3,3,3,
     3,3,3,3,3,3,3,3,	
 };
 
 int mapC[]=
 {
-    -1,2,2,2,2,1,1,-1,
-    2,6,6,6,0,0,0,1,
-    2,6,6,6,0,0,0,1,
-    2,2,2,6,0,0,0,1,
-    1,-1,-1,-1,-1,-1,-1,3,
-    1,-1,-1,-1,-1,-1,-1,3,
+    -1,1,1,1,1,1,1,-1,
     1,-1,-1,-1,-1,-1,-1,1,
-    1,1,1,1,1,1,1,1,	
+    1,-1,-1,-1,-1,-1,-1,1,
+    1,-1,-1,-1,-1,-1,-1,1,
+    2,2,2,6,0,-1,-1,-1,
+    2,6,6,6,0,-1,-1,-1,
+    2,6,6,6,0,-1,-1,-1,
+    -1,2,2,2,2,1,1,1,	
 };
+
 
 typedef struct main
 {
@@ -124,17 +122,17 @@ void Buttons(unsigned char key,int x,int y)
 void drawRays2D()
 {
     // rendering background
-    glColor3f(0.0f, 0.75f, 1.0f); glBegin(GL_QUADS); glVertex2i(526,  0); glVertex2i(1006,  0);
-    glVertex2i(1006,160); glVertex2i(526,160); glEnd();	
+    //glColor3f(0.0f, 0.75f, 1.0f); glBegin(GL_QUADS); glVertex2i(526,  0); glVertex2i(1006,  0);
+    //glVertex2i(1006,160); glVertex2i(526,160); glEnd();	
 
-    glColor3f(0.2f, 0.7f, 0.2f); glBegin(GL_QUADS); glVertex2i(526,160); glVertex2i(1006,160); 
-    glVertex2i(1006,320); glVertex2i(526,320); glEnd();	 	
+    // glColor3f(0.2f, 0.7f, 0.2f); glBegin(GL_QUADS); glVertex2i(526,160); glVertex2i(1006,160); 
+    //glVertex2i(1006,320); glVertex2i(526,320); glEnd();	 	
         
     int r,mx,my,mp,dof,side; float vx,vy,rx,ry,ra,xo,yo,disV,disH; 
     
     ra=FixAng(pa+30);
     
-    for(r=0;r<60;r++)
+    for(r=0;r<120;r++)
     {
         int vmt=0,hmt=0;
         dof=0; side=0; disV=100000;
@@ -188,18 +186,18 @@ void drawRays2D()
         //draw the shortest one
 
         float shade=1;
-        glColor3f(0,0.8,0);
-        if(disV<disH){ hmt=vmt; shade=0.5; rx=vx; ry=vy; disH=disV; glColor3f(0,0.6,0);}
-        glLineWidth(2); glBegin(GL_LINES); glVertex2i(px,py); glVertex2i(rx,ry); glEnd();
+        //glColor3f(0,0.8,0);
+        if(disV<disH){ hmt=vmt; shade=0.5; rx=vx; ry=vy; disH=disV;}
+        //glLineWidth(2); glBegin(GL_LINES); glVertex2i(px,py); glVertex2i(rx,ry); glEnd(); // top down rays
         
         // draw 3D
         int ca=FixAng(pa-ra); disH=disH*cos(degToRad(ca)); // fisheye fix
-        int lineH=(mapS*320)/(disH); 
+        int lineH=(mapS*640)/(disH); 
         
         float ty_step=32.0/(float)lineH;
         float offset=0;
-        if(lineH>320){ offset=(lineH-320)/2.0; lineH=320; }
-        int lineOff=160-(lineH>>1);
+        if(lineH>640){ offset=(lineH-640)/2.0; lineH=640; }
+        int lineOff=320-(lineH>>1);
         
         // --- Draw walls ---
         int y;
@@ -214,28 +212,23 @@ void drawRays2D()
             tx=(int)floor(ry/2)%32; if (ra>90&&ra<270){tx=31-tx;} 
         }
 
-        // temporary bug fix
-        /*if(tx < 0)  tx = 0;
-        if(tx > 31) tx = 31; */
-
-        // ty+=32;
         for(y=0;y<lineH;y++) {
             int pixel=((int)ty*32+(int)tx)*3+(hmt*32*32*3);
             int red=All_Textures[pixel+0]*shade;
             int green=All_Textures[pixel+1]*shade;
             int blue=All_Textures[pixel+2]*shade;
             
-            glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8+530,y+lineOff);glEnd();
+            glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8,y+lineOff);glEnd();
             ty+=ty_step;
         }
 
         // --- Draw floors and roof ---
-        for(y=lineOff+lineH;y<320;y++)
+        for(y=lineOff+lineH;y<640;y++)
         {
-            float dy=y-(320/2.0), deg=degToRad(ra), raFix=cos(degToRad(FixAng(pa-ra)));
+            float dy=y-(640/2.0), deg=degToRad(ra), raFix=cos(degToRad(FixAng(pa-ra)));
         
-            tx=px/2 + cos(deg)*158*32/dy/raFix;
-            ty=py/2 - sin(deg)*158*32/dy/raFix;
+            tx=px/2 + cos(deg)*158*32*2/dy/raFix;
+            ty=py/2 - sin(deg)*158*32*2/dy/raFix;
             int mp=mapF[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
 
             int pixel=(((int)(ty)&31)*32 + ((int)(tx)&31))*3+mp*3;
@@ -243,7 +236,7 @@ void drawRays2D()
             int green=All_Textures[pixel+1]*0.7;
             int blue=All_Textures[pixel+2]*0.7;
             
-            glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8+530,y);glEnd();
+            glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8,y);glEnd();
             
             // draw roof
             mp=mapC[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
@@ -253,22 +246,43 @@ void drawRays2D()
             green=All_Textures[pixel+1];
             blue=All_Textures[pixel+2];
             
-            if(mp>=0){glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8+530,320-y);glEnd();}
+            if(mp>=0){glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8,640-y);glEnd();}
         
         }
-        ra=FixAng(ra-1);
+        ra=FixAng(ra-0.5);
     }
 }
 
+void DrawSkybox()
+{
+    //glBegin();
+    glPointSize(8);
+    glBegin(GL_POINTS);
+    int x,y;
+    for(y=0;y<40;y++)
+    {
+        for(x=0;x<120;x++)
+        {
+            int xo=(int)(pa*2-x); if(xo<0){xo+=120;} xo=xo%120;
+            int pixel=(y*120+xo)*3;
+            int red=Skybox[pixel+0];
+            int green=Skybox[pixel+1];  
+            int blue=Skybox[pixel+2];
+            
+            glColor3ub(red,green,blue);glVertex2i(x*8,y*8);
+        }
+    }
+    glEnd();        
+}
 //initialization
 float frame1,frame2,fps;
 
 void init()
 {
- glClearColor(0.3,0.3,0.3,0);
- gluOrtho2D(0,1024,510,0);
- px=150; py=400; pa=90;
- pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa)); 
+    glClearColor(0.3,0.3,0.3,0);
+    gluOrtho2D(0,960,640,0);
+    px=150; py=400; pa=90;
+    pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa)); 
 }
 
 void ButtonDown(unsigned char key,int x,int y)
@@ -327,7 +341,7 @@ void ButtonUp(unsigned char key,int x,int y)
 
 void resize(int w, int h)
 {
-    glutReshapeWindow(1024,512);
+    glutReshapeWindow(960,640);
 }
 
 void display()
@@ -388,18 +402,19 @@ void display()
     glutPostRedisplay();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
-    drawMap2D();
-    drawPlayer2D();
+    //drawMap2D();
+    //drawPlayer2D();
+
+    DrawSkybox();
     drawRays2D();
     glutSwapBuffers();  
 }
-
 int main(int argc, char* argv[])
 { 
-    mom_multiplier=0.9;
+    mom_multiplier=1.0;
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutInitWindowSize(1024,512);
+    glutInitWindowSize(960,640);
     glutCreateWindow("Atlanta3D Engine 2");
     init();
     glutDisplayFunc(display);
