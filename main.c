@@ -3,11 +3,13 @@
 
 #include <GL/glut.h>
 
-#include "textures.h"
+//#include "textures.h"
+#include "textures/32pm.ppm"
 
 #define mapX  8
 #define mapY  8
 #define mapS mapX*mapY
+#define doorValue 3
 
 //#define M_PI M_PI
 // so my compiler doesnt argue witch me
@@ -15,36 +17,36 @@
 int mapW[]=
 {
     2,2,2,2,2,1,1,1,
-    2,0,0,0,2,0,0,1,
-    2,0,0,0,2,0,0,1,
-    2,2,2,4,2,0,0,1,
-    1,0,0,0,0,0,0,3,
-    1,0,0,0,0,0,0,3,
-    1,0,0,0,0,0,0,1,
-    1,1,1,1,1,1,1,1,	
+    2,0,0,0,5,0,0,1,
+    2,0,0,0,5,0,0,1,
+    2,5,5,doorValue,5,0,0,1,
+    2,0,0,0,0,0,0,2,
+    2,0,0,0,0,0,0,2,
+    2,0,0,0,0,0,0,2,
+    2,2,2,2,2,2,2,2,	
 };
 
 int mapF[]=
 {
-    0,2,2,2,2,1,1,0,
-    2,1,1,1,2,2,2,1,
-    2,1,1,1,2,2,2,1,
-    2,2,2,1,2,2,2,1,
-    1,0,0,0,0,0,0,3,
-    1,0,0,0,0,1,0,3,
-    1,0,0,0,0,0,0,1,
-    1,1,1,1,1,1,1,1,	
+    3,3,3,3,3,1,1,1,
+    3,5,5,5,3,7,7,1,
+    3,5,5,5,3,7,7,1,
+    3,3,3,5,3,7,7,1,
+    3,3,3,3,3,3,3,3,
+    3,3,3,3,3,3,3,3,
+    3,3,3,3,3,3,3,3,
+    3,3,3,3,3,3,3,3,	
 };
 
 int mapC[]=
 {
-    99,2,2,2,2,1,1,99,
-    2,1,1,1,2,2,2,1,
-    2,1,1,1,2,2,2,1,
-    2,2,2,1,2,2,2,1,
-    1,99,99,99,99,99,99,3,
-    1,99,99,99,99,99,99,3,
-    1,99,99,99,99,99,99,1,
+    -1,2,2,2,2,1,1,-1,
+    2,6,6,6,0,0,0,1,
+    2,6,6,6,0,0,0,1,
+    2,2,2,6,0,0,0,1,
+    1,-1,-1,-1,-1,-1,-1,3,
+    1,-1,-1,-1,-1,-1,-1,3,
+    1,-1,-1,-1,-1,-1,-1,1,
     1,1,1,1,1,1,1,1,	
 };
 
@@ -201,7 +203,7 @@ void drawRays2D()
         
         // --- Draw walls ---
         int y;
-        float ty=offset*ty_step+hmt*32;
+        float ty=offset*ty_step;//+hmt*32;
         float tx;
         if(shade==1)
         {
@@ -218,14 +220,12 @@ void drawRays2D()
 
         // ty+=32;
         for(y=0;y<lineH;y++) {
-            float c=All_Textures[(int)(ty)*32+(int)(tx)]*shade;
-            if(hmt==0) { glColor3f(c/2,c/2,c/2);} // red
-            if(hmt==1) { glColor3f(0.70*c, 0.20*c, 0.15*c);} // brown bricks
-            if(hmt==2) { glColor3f(0.50*c, 0.70*c, 0.85*c);} // windowish blue
-            if(hmt==3) { glColor3f(0.65*c, 0.50*c, 0.3*c);} // wooden door
+            int pixel=((int)ty*32+(int)tx)*3+(hmt*32*32*3);
+            int red=All_Textures[pixel+0]*shade;
+            int green=All_Textures[pixel+1]*shade;
+            int blue=All_Textures[pixel+2]*shade;
             
-            
-            glPointSize(8);glBegin(GL_POINTS);glVertex2i(r*8+530,y+lineOff);glEnd();
+            glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8+530,y+lineOff);glEnd();
             ty+=ty_step;
         }
 
@@ -236,25 +236,25 @@ void drawRays2D()
         
             tx=px/2 + cos(deg)*158*32/dy/raFix;
             ty=py/2 - sin(deg)*158*32/dy/raFix;
-
             int mp=mapF[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
-            float c=All_Textures[((int)(ty)&31)*32 + ((int)(tx)&31)+mp]*0.7;
-            glColor3f(c*0.7,c,c*0.7);
-            int tile_type=mapF[(int)(ty/32.0)*mapX+(int)(tx/32.0)];
-            // no roof logic
-            //if(tile_type==99) { continue; }
-            if(tile_type==1) { glColor3f(c,c*0.9,c*0.5); } // differet color for "planks" 
-            glPointSize(8);glBegin(GL_POINTS);glVertex2i(r*8+530,y);glEnd();
 
-            // draw tha roof
-            mp=mapC[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
-            tile_type=mapC[(int)(ty/32.0)*mapX+(int)(tx/32.0)];
-            if(tile_type==99) { continue; } // no roof
-            c=All_Textures[((int)(ty)&31)*32 + ((int)(tx)&31)+mp]*0.4;
-            glColor3f(c*0.7,c*0.7,c);
+            int pixel=(((int)(ty)&31)*32 + ((int)(tx)&31))*3+mp*3;
+            int red=All_Textures[pixel+0]*0.7;
+            int green=All_Textures[pixel+1]*0.7;
+            int blue=All_Textures[pixel+2]*0.7;
             
-            if(tile_type==1) { glColor3f(c,c*0.9,c*0.5); } // differet color for "planks" 
-            glPointSize(8);glBegin(GL_POINTS);glVertex2i(r*8+530,320-y);glEnd();
+            glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8+530,y);glEnd();
+            
+            // draw roof
+            mp=mapC[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
+            //if(mp==-1) { continue; }
+            pixel=(((int)(ty)&31)*32 + ((int)(tx)&31))*3+mp*3;
+            red=All_Textures[pixel+0];
+            green=All_Textures[pixel+1];
+            blue=All_Textures[pixel+2];
+            
+            if(mp>=0){glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8+530,320-y);glEnd();}
+        
         }
         ra=FixAng(ra-1);
     }
@@ -297,7 +297,7 @@ void ButtonDown(unsigned char key,int x,int y)
         int ipx=px/64.0, ipxa_xo=(px+xo)/64.0;
         int ipy=py/64.0, ipya_yo=(py+yo)/64.0;
 
-        if(mapW[ipya_yo*mapX+ipxa_xo]==4) { mapW[ipya_yo*mapX+ipxa_xo]=0;}
+        if(mapW[ipya_yo*mapX+ipxa_xo]==doorValue) { mapW[ipya_yo*mapX+ipxa_xo]=0;}
     }
 
     glutPostRedisplay;
@@ -400,7 +400,7 @@ int main(int argc, char* argv[])
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(1024,512);
-    glutCreateWindow("Atlanta3D Engine");
+    glutCreateWindow("Atlanta3D Engine 2");
     init();
     glutDisplayFunc(display);
     glutReshapeFunc(resize);
