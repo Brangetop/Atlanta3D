@@ -8,18 +8,18 @@
 
 #define mapX  8
 #define mapY  8
-#define mapS mapX*mapY
+#define mapS 64
 #define doorValue 3
 
 int mapW[]=
 {
     2,2,2,2,2,2,2,2,
-    2,0,0,0,0,0,0,2,
+    2,0,0,0,0,0,0,1,
     2,0,0,0,0,0,0,doorValue,
-    2,0,0,0,0,0,0,2,
-    2,5,5,doorValue,5,0,0,2,
-    5,0,0,0,5,0,0,2,
-    5,0,0,0,5,0,0,2,
+    2,0,0,0,0,0,0,1,
+    2,5,5,doorValue,5,0,0,1,
+    5,0,0,0,5,0,0,1,
+    5,0,0,0,5,0,0,1,
     2,5,5,5,2,2,2,2,	
 };
 
@@ -120,13 +120,7 @@ void Buttons(unsigned char key,int x,int y)
 
 void drawRays2D()
 {
-    // rendering background
-    //glColor3f(0.0f, 0.75f, 1.0f); glBegin(GL_QUADS); glVertex2i(526,  0); glVertex2i(1006,  0);
-    //glVertex2i(1006,160); glVertex2i(526,160); glEnd();	
-
-    // glColor3f(0.2f, 0.7f, 0.2f); glBegin(GL_QUADS); glVertex2i(526,160); glVertex2i(1006,160); 
-    //glVertex2i(1006,320); glVertex2i(526,320); glEnd();	 	
-        
+    // Main walls/floor/ceiling rendering logic
     int r,mx,my,mp,dof,side; float vx,vy,rx,ry,ra,xo,yo,disV,disH; 
     
     ra=FixAng(pa+30);
@@ -200,7 +194,7 @@ void drawRays2D()
         
         // --- Draw walls ---
         int y;
-        float ty=offset*ty_step;//+hmt*32;
+        float ty=offset*ty_step;
         float tx;
         if(shade==1)
         {
@@ -239,7 +233,6 @@ void drawRays2D()
             
             // draw roof
             mp=mapC[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
-            //if(mp==-1) { continue; }
             pixel=(((int)(ty)&31)*32 + ((int)(tx)&31))*3+mp*3;
             red=All_Textures[pixel+0];
             green=All_Textures[pixel+1];
@@ -254,7 +247,7 @@ void drawRays2D()
 
 void DrawSkybox()
 {
-    //glBegin();
+    // Draws sky from texture and rotates it when player angle changes
     glPointSize(8);
     glBegin(GL_POINTS);
     int x,y;
@@ -273,7 +266,8 @@ void DrawSkybox()
     }
     glEnd();        
 }
-//initialization
+
+// ---- initialization ----
 float frame1,frame2,fps;
 
 void init()
@@ -312,7 +306,6 @@ void ButtonDown(unsigned char key,int x,int y)
 
         if(mapW[ipya_yo*mapX+ipxa_xo]==doorValue) { mapW[ipya_yo*mapX+ipxa_xo]=0;}
     }
-
     glutPostRedisplay;
 }
 
@@ -334,7 +327,6 @@ void ButtonUp(unsigned char key,int x,int y)
     {
         Keys.d=0;
     }
-
     glutPostRedisplay;
 }
 
@@ -348,8 +340,6 @@ void display()
     frame2=glutGet(GLUT_ELAPSED_TIME);
     fps=(frame2-frame1);
     frame1=glutGet(GLUT_ELAPSED_TIME);
-    
-
     
     int xo=0; if(pdx<0) { xo=-20; } else { xo=20; }
     int yo=0; if(pdy<0) { yo=-20; } else { yo=20; }
@@ -401,9 +391,10 @@ void display()
     glutPostRedisplay();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+
+    // these will draw 2d top-down world map, created for debugging purposes
     //drawMap2D();
     //drawPlayer2D();
-
     DrawSkybox();
     drawRays2D();
     glutSwapBuffers();  
@@ -418,10 +409,6 @@ int main(int argc, char* argv[])
     init();
     glutDisplayFunc(display);
     glutReshapeFunc(resize);
-
-    // older key handling
-    // MAKE A BUILD FLAG FOR TS
-    //glutKeyboardFunc(Buttons);
     glutKeyboardFunc(ButtonDown);
     glutKeyboardUpFunc(ButtonUp);
     glutMainLoop();
