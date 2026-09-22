@@ -1,0 +1,2 @@
+window_title Atlanta3D Engine V2
+door_value 3

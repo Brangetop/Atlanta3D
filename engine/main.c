@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
+#include <stdio.h>
+#include <string.h>
 
 #include <GL/glut.h>
 
@@ -9,15 +11,57 @@
 #define mapX  8
 #define mapY  8
 #define mapS 64
-#define doorValue 3
+
+typedef struct 
+{
+    char window_title[128];
+    int door_value;
+} Config;
+
+typedef struct
+{
+
+} World;
+
+Config load_cfg(const char *filename) {
+    Config config;
+
+    strcpy(config.window_title, "Atlanta3D Engine 2");
+    config.door_value=3;
+
+    FILE *file = fopen(filename, "r");
+    if(file==NULL)
+    {
+        return config;
+    }
+
+    char line[256];
+    while(fgets(line, sizeof(line), file))
+    {
+        char key[128];
+        char value_str[128];
+
+        if (sscanf(line, "%127s %127s", key, value_str) == 2) {
+            
+            if (strcmp(key, "window_title") == 0) {
+                strncpy(config.window_title, value_str, sizeof(config.window_title) - 1);
+                config.window_title[sizeof(config.window_title) - 1] = '\0';
+            } 
+            else if (strcmp(key, "door_value") == 0) {
+                config.door_value = atoi(value_str);
+            }
+        }
+    }
+    
+}
 
 int mapW[]=
 {
     2,2,2,2,2,2,2,2,
     2,0,0,0,0,0,0,1,
-    2,0,0,0,0,0,0,doorValue,
+    2,0,0,0,0,0,0,3,
     2,0,0,0,0,0,0,1,
-    2,5,5,doorValue,5,0,0,1,
+    2,5,5,3,5,0,0,1,
     5,0,0,0,5,0,0,1,
     5,0,0,0,5,0,0,1,
     2,5,5,5,2,2,2,2,	
@@ -276,6 +320,8 @@ void init()
     gluOrtho2D(0,960,640,0);
     px=150; py=400; pa=90;
     pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa)); 
+
+    
 }
 
 void ButtonDown(unsigned char key,int x,int y)
@@ -304,7 +350,7 @@ void ButtonDown(unsigned char key,int x,int y)
         int ipx=px/64.0, ipxa_xo=(px+xo)/64.0;
         int ipy=py/64.0, ipya_yo=(py+yo)/64.0;
 
-        if(mapW[ipya_yo*mapX+ipxa_xo]==doorValue) { mapW[ipya_yo*mapX+ipxa_xo]=0;}
+        if(mapW[ipya_yo*mapX+ipxa_xo]==3) { mapW[ipya_yo*mapX+ipxa_xo]=0;}
     }
     glutPostRedisplay;
 }
@@ -399,13 +445,17 @@ void display()
     drawRays2D();
     glutSwapBuffers();  
 }
+
 int main(int argc, char* argv[])
 { 
-    mom_multiplier=1.0;
+    Config config = load_cfg("config.txt");
+
+    mom_multiplier=1.0; // remove in the future
+
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(960,640);
-    glutCreateWindow("Atlanta3D Engine 2");
+    glutCreateWindow(config.window_title);
     init();
     glutDisplayFunc(display);
     glutReshapeFunc(resize);
