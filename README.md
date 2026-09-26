@@ -12,6 +12,11 @@ It's important to understand that (for now) im not making a general purpose prod
 * 8x8 map size
 * 960x640 resolution
 * 32x32 textures
+## Compilation
+For linux compilation install all the libraries and run build.sh
+
+For windows you'll have to fuck with MinGW to make it work with freeGLUT and GL, then run 
+$ gcc main.c -o Atlanta3D.exe -lfreeglut -lopengl32 -lglu32 -mwindows
 
 ## Huge thanks for the help with this project:
 * the 3D Sage Youtube channel for some amazing tutorials and textures

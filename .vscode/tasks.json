@@ -1,0 +1,30 @@
+
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "Build Atlanta3D",
+            "command": "C:/msys64/ucrt64/bin/gcc.exe",
+            "args": [
+                "${file}",
+                "-o",
+                "${fileDirname}/Atlanta3D.exe",
+                "-lfreeglut",
+                "-lopengl32",
+                "-lglu32",
+                "-mwindows"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
