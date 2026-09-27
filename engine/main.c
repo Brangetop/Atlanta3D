@@ -260,6 +260,7 @@ void drawRays2D()
         }
 
         // --- Draw floors and roof ---
+        // something here causes devision by 0. too bad!
         for(y=lineOff+lineH;y<640;y++)
         {
             float dy=y-(640/2.0), deg=degToRad(ra), raFix=cos(degToRad(FixAng(pa-ra)));
@@ -326,6 +327,7 @@ void init()
 
 void ButtonDown(unsigned char key,int x,int y)
 {
+    // todo: register keys not like chars
     if(key=='w')
     {
         Keys.w=1;
