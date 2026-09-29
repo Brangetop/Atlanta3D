@@ -12,49 +12,7 @@
 #define mapY  8
 #define mapS 64
 
-typedef struct 
-{
-    char window_title[128];
-    int door_value;
-} Config;
-
-typedef struct
-{
-
-} World;
-
-Config load_cfg(const char *filename) {
-    Config config;
-
-    strcpy(config.window_title, "Atlanta3D Engine 2");
-    config.door_value=3;
-
-    FILE *file = fopen(filename, "r");
-    if(file==NULL)
-    {
-        return config;
-    }
-
-    char line[256];
-    while(fgets(line, sizeof(line), file))
-    {
-        char key[128];
-        char value_str[128];
-
-        if (sscanf(line, "%127s %127s", key, value_str) == 2) {
-            
-            if (strcmp(key, "window_title") == 0) {
-                strncpy(config.window_title, value_str, sizeof(config.window_title) - 1);
-                config.window_title[sizeof(config.window_title) - 1] = '\0';
-            } 
-            else if (strcmp(key, "door_value") == 0) {
-                config.door_value = atoi(value_str);
-            }
-        }
-    }
-    
-}
-
+// To be put into struct
 int mapW[]=
 {
     2,2,2,2,2,2,2,2,
@@ -91,9 +49,9 @@ int mapC[]=
     -1,2,2,2,2,1,1,1,	
 }; 
 
+// Maybe too? 
 typedef struct main
 {
-    /* data */
     int w,a,s,d;
 }ButtonKeys; ButtonKeys Keys;
 
@@ -120,6 +78,7 @@ void drawMap2D()
     } 
 }
 
+// Helper functions
 float degToRad(float a) { return a*M_PI/180.0;}
 float FixAng(float a)
 {
@@ -130,12 +89,6 @@ float FixAng(float a)
 }
 
 float px,py,pdx,pdy,pa;
-
-// momentum system related variables
-// will be replaced with speed when i feel like it
-float pmom_f,pmom_b,mom_multiplier;
-float pmom_accel = 0.0;
-
 
 void drawPlayer2D()
 {
@@ -354,7 +307,7 @@ void ButtonDown(unsigned char key,int x,int y)
 
         if(mapW[ipya_yo*mapX+ipxa_xo]==3) { mapW[ipya_yo*mapX+ipxa_xo]=0;}
     }
-    glutPostRedisplay;
+    glutPostRedisplay();
 }
 
 void ButtonUp(unsigned char key,int x,int y)
@@ -375,7 +328,7 @@ void ButtonUp(unsigned char key,int x,int y)
     {
         Keys.d=0;
     }
-    glutPostRedisplay;
+    glutPostRedisplay();
 }
 
 void resize(int w, int h)
@@ -399,42 +352,14 @@ void display()
     
     if(Keys.w==1)
     {  
-        pmom_f=1;
-        if(pmom_accel<1) { pmom_accel+=0.005*fps; }
-        if(pmom_accel>1) { pmom_accel=1; }
-        if(mapW[ipy*mapX+ipxa_xo]==0){ px+=pdx*0.2*fps*pmom_accel;}
-        if(mapW[ipya_yo*mapX+ipx]==0){ py+=pdy*0.2*fps*pmom_accel;}
+        if(mapW[ipy*mapX+ipxa_xo]==0){ px+=pdx*0.2*fps;}
+        if(mapW[ipya_yo*mapX+ipx]==0){ py+=pdy*0.2*fps;}
     }
     else if(Keys.s==1)
-    {  
-        pmom_b=1;
-        if(pmom_accel<1) { pmom_accel+=0.005*fps; }
-        if(pmom_accel>1) { pmom_accel=1; }
-        if(mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*0.2*fps*pmom_accel;}
-        if(mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*0.2*fps*pmom_accel;}
-    }
-    else 
     { 
-        if(pmom_f==1) { pmom_f=pmom_accel; } if(pmom_b==1) { pmom_b=pmom_accel; }
-        pmom_accel=0; 
+        if(mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*0.2*fps;}
+        if(mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*0.2*fps;}
     }
-
-    if((Keys.w==0 & Keys.s==0)&pmom_b>0)
-    {
-        if(pmom_b-0.1==0) { pmom_b=0; }
-        if(mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*0.2*fps*pmom_b*mom_multiplier;}
-        if(mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*0.2*fps*pmom_b*mom_multiplier;}
-        pmom_b-=0.1;
-    }
-
-    if((Keys.w==0 & Keys.s==0)&pmom_f>0)
-    {
-        if(pmom_f-0.07==0) { pmom_f=0; }
-        if(mapW[ipy*mapX+ipxa_xo]==0){ px+=pdx*0.2*fps*pmom_f*mom_multiplier;}
-        if(mapW[ipya_yo*mapX+ipx]==0){ py+=pdy*0.2*fps*pmom_f*mom_multiplier;}
-        pmom_f-=0.07;
-    }
-
 
     glutPostRedisplay();
 
@@ -443,6 +368,7 @@ void display()
     // these will draw 2d top-down world map, created for debugging purposes
     //drawMap2D();
     //drawPlayer2D();
+
     DrawSkybox();
     drawRays2D();
     glutSwapBuffers();  
@@ -450,14 +376,10 @@ void display()
 
 int main(int argc, char* argv[])
 { 
-    Config config = load_cfg("config.txt");
-
-    mom_multiplier=1.0; // remove in the future
-
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(960,640);
-    glutCreateWindow(config.window_title);
+    glutCreateWindow("Atlanta3D Engine v2");
     init();
     glutDisplayFunc(display);
     glutReshapeFunc(resize);
