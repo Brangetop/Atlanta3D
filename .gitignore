@@ -3,3 +3,4 @@ engine/atlanta3D_engine
 atlanta3D_engine.exe
 libfreeglut.dll
 engine/Atlanta3D.exe
+.vscode/*
