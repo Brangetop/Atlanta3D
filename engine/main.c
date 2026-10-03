@@ -49,6 +49,29 @@ int mapC[]=
     -1,2,2,2,2,1,1,1,	
 }; 
 
+// engine.c file later
+typedef struct
+{
+    const char *windowTitle;
+    float sensitivityLR;
+    float sensitivityMV;
+} EngineConfig;
+// loaders.c file later
+void loadConfig() 
+{
+    FILE *fp;
+    char s[64];
+    int linecount=0;
+
+    fp=fopen("config.txt", "r");
+
+    while(fgets(s, sizeof s, fp)!=NULL)
+    {
+        
+    }
+}
+
+
 // Maybe too? 
 typedef struct main
 {
