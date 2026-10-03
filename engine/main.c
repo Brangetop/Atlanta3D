@@ -216,7 +216,10 @@ void drawRays2D()
         // something here causes devision by 0. too bad!
         for(y=lineOff+lineH;y<640;y++)
         {
+            // ts was causing division by 0
             float dy=y-(640/2.0), deg=degToRad(ra), raFix=cos(degToRad(FixAng(pa-ra)));
+            if (fabsf(dy) < 0.001f || fabsf(raFix) < 0.001f)
+                continue;
         
             tx=px/2 + cos(deg)*158*32*2/dy/raFix;
             ty=py/2 - sin(deg)*158*32*2/dy/raFix;
