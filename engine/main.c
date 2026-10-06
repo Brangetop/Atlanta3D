@@ -56,8 +56,9 @@ typedef struct
     float sensitivityLR;
     float sensitivityMV;
 } EngineConfig;
+
 // loaders.c file later
-void loadConfig() 
+EngineConfig loadConfig() 
 {
     FILE *fp;
     char s[64];
@@ -65,10 +66,7 @@ void loadConfig()
 
     fp=fopen("config.txt", "r");
 
-    while(fgets(s, sizeof s, fp)!=NULL)
-    {
-        
-    }
+    //while(fgets(s, sizeof s, fp)!=NULL)
 }
 
 
