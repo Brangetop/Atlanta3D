@@ -12,6 +12,11 @@
 #define mapY  8
 #define mapS 64
 
+// Global scope
+// Yes, its kinda wrong
+// No, you wont stop me from using globals
+// static EngineConfig engineConfig;
+
 // To be put into struct
 int mapW[]=
 {
@@ -58,7 +63,7 @@ typedef struct
 } EngineConfig;
 
 // loaders.c file later
-EngineConfig loadConfig() 
+EngineConfig loadConfig(void) 
 {
     FILE *fp;
     char s[64];
@@ -67,6 +72,15 @@ EngineConfig loadConfig()
     fp=fopen("config.txt", "r");
 
     //while(fgets(s, sizeof s, fp)!=NULL)
+    
+    EngineConfig config = 
+    {
+        .windowTitle="Atlanta3D Engine V2",
+        .sensitivityLR=0.2f,
+        .sensitivityMV=0.2f
+    };
+
+    return config;
 }
 
 
@@ -399,11 +413,15 @@ void display()
 }
 
 int main(int argc, char* argv[])
-{ 
+{
+    // Initializing structures
+    EngineConfig config = loadConfig();
+    
+    // Initializing GLUT and GL
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(960,640);
-    glutCreateWindow("Atlanta3D Engine v2");
+    glutCreateWindow(config.windowTitle);
     init();
     glutDisplayFunc(display);
     glutReshapeFunc(resize);
