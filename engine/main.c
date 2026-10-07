@@ -12,12 +12,48 @@
 #define mapY  8
 #define mapS 64
 
-// Global scope
+// header file later
+typedef struct
+{
+    const char *windowTitle;
+    float sensitivityLR;
+    float sensitivityMV;
+} EngineConfig;
+
+typedef struct
+{
+    EngineConfig engineConfig;
+    int currentScene;
+} GameState;
+
+typedef struct
+{
+    // Will load all the maps form a scene file
+    // And
+    // I dont know how not to turn ts into spaghetti code quick
+    // Most likely the architecture is already fucked
+    int mapW[64];
+    int mapF[64];
+    int mapC[64];
+    int mapD[64];
+} Scene;
+
+// Need to code the loadScene function that would take number from gameState as an arguement
+// And load the scene needed to global game state
+
+// ----- Global scope -----
 // Yes, its kinda wrong
 // No, you wont stop me from using globals
 // static EngineConfig engineConfig;
 
+static GameState gameState;
+
 // To be put into struct
+
+// Walls map
+// 0 means no wall
+// other values refer to textures by [index]-1 
+// meaning 1 is texture number 0 etc.
 int mapW[]=
 {
     2,2,2,2,2,2,2,2,
@@ -30,6 +66,8 @@ int mapW[]=
     2,5,5,5,2,2,2,2,	
 };
 
+// Floor map
+// Other values do refer to textures starting from 0
 int mapF[]=
 {
     3,3,3,3,3,1,1,1,
@@ -42,6 +80,9 @@ int mapF[]=
     3,3,3,3,3,3,3,3,	
 };
 
+// Ceiling map
+// -1 is a value for empty space
+// Other values do refer to textures starting from 0
 int mapC[]=
 {
     -1,1,1,1,1,1,1,-1,
@@ -54,13 +95,21 @@ int mapC[]=
     -1,2,2,2,2,1,1,1,	
 }; 
 
-// engine.c file later
-typedef struct
+// Door map that will transition between scenes(maps)
+// -1 is a regular door that can be opened
+// Ohter values are map numbers(to be implemented)
+int mapD[]=
 {
-    const char *windowTitle;
-    float sensitivityLR;
-    float sensitivityMV;
-} EngineConfig;
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    1,-1,-1,-1,-1,-1,-1,1,
+    2,2,2,6,0,-1,-1,-1,
+    2,6,6,6,0,-1,-1,-1,
+    2,6,6,6,0,-1,-1,-1,
+    -1,2,2,2,2,1,1,1,	
+}; 
+
 
 // loaders.c file later
 EngineConfig loadConfig(void) 
@@ -69,8 +118,8 @@ EngineConfig loadConfig(void)
     char s[64];
     int linecount=0;
 
-    fp=fopen("config.txt", "r");
-
+    //fp=fopen("config.txt", "r");
+    
     //while(fgets(s, sizeof s, fp)!=NULL)
     
     EngineConfig config = 
@@ -81,6 +130,19 @@ EngineConfig loadConfig(void)
     };
 
     return config;
+}
+
+GameState initGameState(void)
+{
+    EngineConfig config=loadConfig();
+    
+    GameState state =
+    {
+        .engineConfig=config,
+        .currentScene=0
+    };
+
+    return state;
 }
 
 
@@ -376,6 +438,9 @@ void resize(int w, int h)
 
 void display()
 {
+    float sensLR=gameState.engineConfig.sensitivityLR;
+    float sensMV=gameState.engineConfig.sensitivityMV;
+    
     frame2=glutGet(GLUT_ELAPSED_TIME);
     fps=(frame2-frame1);
     frame1=glutGet(GLUT_ELAPSED_TIME);
@@ -385,18 +450,18 @@ void display()
     int ipx=px/64.0, ipxa_xo=(px+xo)/64.0, ipxs_xo=(px-xo)/64.0;
     int ipy=py/64.0, ipya_yo=(py+yo)/64.0, ipys_yo=(py-yo)/64.0;
     
-    if(Keys.a==1){ pa+=sensitivityLR*fps; pa=FixAng(pa); pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa));} 	
-    if(Keys.d==1){ pa-=sensitivityLR*fps; pa=FixAng(pa); pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa));} 
+    if(Keys.a==1){ pa+=sensLR*fps; pa=FixAng(pa); pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa));} 	
+    if(Keys.d==1){ pa-=sensLR*fps; pa=FixAng(pa); pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa));} 
     
     if(Keys.w==1)
     {  
-        if(mapW[ipy*mapX+ipxa_xo]==0){ px+=pdx*0.2*fps;}
-        if(mapW[ipya_yo*mapX+ipx]==0){ py+=pdy*0.2*fps;}
+        if(mapW[ipy*mapX+ipxa_xo]==0){ px+=pdx*sensMV*fps;}
+        if(mapW[ipya_yo*mapX+ipx]==0){ py+=pdy*sensMV*fps;}
     }
     else if(Keys.s==1)
     { 
-        if(mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*0.2*fps;}
-        if(mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*0.2*fps;}
+        if(mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*sensMV*fps;}
+        if(mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*sensMV*fps;}
     }
 
     glutPostRedisplay();
@@ -415,13 +480,14 @@ void display()
 int main(int argc, char* argv[])
 {
     // Initializing structures
-    EngineConfig config = loadConfig();
-    
+    // engineConfig=loadConfig();
+    gameState=initGameState();
+
     // Initializing GLUT and GL
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(960,640);
-    glutCreateWindow(config.windowTitle);
+    glutCreateWindow(gameState.engineConfig.windowTitle);
     init();
     glutDisplayFunc(display);
     glutReshapeFunc(resize);
