@@ -57,7 +57,7 @@ static GameState gameState;
 // 0 means no wall
 // other values refer to textures by [index]-1 
 // meaning 1 is texture number 0 etc.
-int mapW[]=
+/*int mapW[]=
 {
     2,2,2,2,2,2,2,2,
     2,0,0,0,0,0,0,1,
@@ -113,6 +113,7 @@ int mapD[]=
     -1,2,2,2,2,1,1,1,	
 }; 
 
+*/
 
 // loaders.c file later
 EngineConfig loadConfig(void) 
@@ -209,8 +210,8 @@ void drawMap2D()
     {
         for(x=0;x<mapX;x++)
         {
-            if(mapW[y*mapX+x]>0){ glColor3f(1,1,1);} else{ glColor3f(0,0,0);}
-            if(mapW[y*mapX+x]==4) { glColor3f(1,0.7,0.3); } // different color for doors in debug window
+            if(gameState.scene.mapW[y*mapX+x]>0){ glColor3f(1,1,1);} else{ glColor3f(0,0,0);}
+            if(gameState.scene.mapW[y*mapX+x]==4) { glColor3f(1,0.7,0.3); } // different color for doors in debug window
             xo=x*mapS; yo=y*mapS;
             glBegin(GL_QUADS); 
             glVertex2i( 0   +xo+1, 0   +yo+1); 
@@ -261,6 +262,8 @@ void Buttons(unsigned char key,int x,int y)
 
 void drawRays2D()
 {
+    const Scene *scene=&gameState.scene;
+
     // Main walls/floor/ceiling rendering logic
     int r,mx,my,mp,dof,side; float vx,vy,rx,ry,ra,xo,yo,disV,disH; 
     
@@ -289,7 +292,7 @@ void drawRays2D()
         while(dof<8)
         { 
             mx=(int)(rx)>>6; my=(int)(ry)>>6; mp=my*mapX+mx;                     
-            if(mp>0 && mp<mapX*mapY && mapW[mp]>0){ vmt=mapW[mp]-1; dof=8; disV=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);}//hit    
+            if(mp>0 && mp<mapX*mapY && scene->mapW[mp]>0){ vmt=scene->mapW[mp]-1; dof=8; disV=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);}//hit    
             else{ rx+=xo; ry+=yo; dof+=1;}
         } 
         vx=rx; vy=ry;
@@ -313,7 +316,7 @@ void drawRays2D()
         while(dof<8) 
         { 
             mx=(int)(rx)>>6; my=(int)(ry)>>6; mp=my*mapX+mx;                          
-            if(mp>0 && mp<mapX*mapY && mapW[mp]>0){ hmt=mapW[mp]-1; dof=8; disH=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);}//hit        
+            if(mp>0 && mp<mapX*mapY && scene->mapW[mp]>0){ hmt=scene->mapW[mp]-1; dof=8; disH=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);}//hit        
             else{ rx+=xo; ry+=yo; dof+=1;}
         } 
         
@@ -367,7 +370,7 @@ void drawRays2D()
         
             tx=px/2 + cos(deg)*158*32*2/dy/raFix;
             ty=py/2 - sin(deg)*158*32*2/dy/raFix;
-            int mp=mapF[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
+            int mp=scene->mapF[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
 
             int pixel=(((int)(ty)&31)*32 + ((int)(tx)&31))*3+mp*3;
             int red=All_Textures[pixel+0]*0.7;
@@ -377,7 +380,7 @@ void drawRays2D()
             glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8,y);glEnd();
             
             // draw roof
-            mp=mapC[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
+            mp=scene->mapC[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
             pixel=(((int)(ty)&31)*32 + ((int)(tx)&31))*3+mp*3;
             red=All_Textures[pixel+0];
             green=All_Textures[pixel+1];
@@ -452,7 +455,7 @@ void ButtonDown(unsigned char key,int x,int y)
         int ipx=px/64.0, ipxa_xo=(px+xo)/64.0;
         int ipy=py/64.0, ipya_yo=(py+yo)/64.0;
 
-        if(mapW[ipya_yo*mapX+ipxa_xo]==3) { mapW[ipya_yo*mapX+ipxa_xo]=0;}
+        if(gameState.scene.mapW[ipya_yo*mapX+ipxa_xo]==3) { gameState.scene.mapW[ipya_yo*mapX+ipxa_xo]=0;}
     }
     glutPostRedisplay();
 }
@@ -502,13 +505,13 @@ void display()
     
     if(Keys.w==1)
     {  
-        if(mapW[ipy*mapX+ipxa_xo]==0){ px+=pdx*sensMV*fps;}
-        if(mapW[ipya_yo*mapX+ipx]==0){ py+=pdy*sensMV*fps;}
+        if(gameState.scene.mapW[ipy*mapX+ipxa_xo]==0){ px+=pdx*sensMV*fps;}
+        if(gameState.scene.mapW[ipya_yo*mapX+ipx]==0){ py+=pdy*sensMV*fps;}
     }
     else if(Keys.s==1)
     { 
-        if(mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*sensMV*fps;}
-        if(mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*sensMV*fps;}
+        if(gameState.scene.mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*sensMV*fps;}
+        if(gameState.scene.mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*sensMV*fps;}
     }
 
     glutPostRedisplay();
