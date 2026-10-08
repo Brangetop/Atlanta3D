@@ -141,23 +141,23 @@ static int readMap(FILE *fp, int map[64], int isLastMap)
 {
     for(int i=0; i<64; i++)
     {
-        if(fscanf(fp," %d",&map[i]!=1) { return 0; } // Unable to read the number
-    }
+        if(fscanf(fp," %d",&map[i])!=1) { return 0; } // Unable to read the number
+         
+        if(!(isLastMap && i==63))
+        {
+            int ch;
+            do { ch=fgetc(fp); } while(ch!=EOF && isspace((unsigned char)ch));
 
-    if(!(isLastMap && i==63))
-    {
-        int ch;
-        do { ch=fgetc(fp); } while(ch!=EOF && isspace((unsigned char)ch));
-
-        if(ch!=',') { return 0; }
+            if(ch!=',') { return 0; }
+        }
     }
     return 1;
 }
 
-Scene loadScene(int)
+Scene loadScene(int sceneNumber)
 {
     Scene scene={0};
-    char filename[64]
+    char filename[64];
     
     snprintf(filename, sizeof filename, "scenes/scene%d.txt", sceneNumber);
 
@@ -174,7 +174,7 @@ Scene loadScene(int)
 
     if(!ok)
     {
-        fprintf(stderr, "Error while reading scene file: ", filename);
+        fprintf(stderr, "Error while reading scene file: %s", filename);
         memset(&scene,0,sizeof scene);
     }
 
