@@ -22,12 +22,6 @@ typedef struct
 
 typedef struct
 {
-    EngineConfig engineConfig;
-    int currentScene;
-} GameState;
-
-typedef struct
-{
     // Will load all the maps form a scene file
     // And
     // I dont know how not to turn ts into spaghetti code quick
@@ -37,6 +31,15 @@ typedef struct
     int mapC[64];
     int mapD[64];
 } Scene;
+
+typedef struct
+{
+    EngineConfig engineConfig;
+    Scene scene;
+    int currentScene;
+    
+} GameState;
+
 
 // Need to code the loadScene function that would take number from gameState as an arguement
 // And load the scene needed to global game state
@@ -132,6 +135,71 @@ EngineConfig loadConfig(void)
     return config;
 }
 
+Scene loadScene(int)
+{
+    Scene scene=
+    {
+        // Walls map
+        // 0 means no wall
+        // other values refer to textures by [index]-1 
+        // meaning 1 is texture number 0 etc.
+        .int mapW[]=
+        {
+            2,2,2,2,2,2,2,2,
+            2,0,0,0,0,0,0,1,
+            2,0,0,0,0,0,0,3,
+            2,0,0,0,0,0,0,1,
+            2,5,5,3,5,0,0,1,
+            5,0,0,0,5,0,0,1,
+            5,0,0,0,5,0,0,1,
+            2,5,5,5,2,2,2,2,	
+        };
+
+        // Floor map
+        // Other values do refer to textures starting from 0
+        .int mapF[]=
+        {
+            3,3,3,3,3,1,1,1,
+            3,3,3,3,3,3,3,1,
+            3,3,3,7,7,7,7,1,
+            3,3,3,7,3,3,3,1,
+            3,3,3,5,3,3,3,3,
+            3,5,5,5,3,3,3,3,
+            3,5,5,5,3,3,3,3,
+            3,3,3,3,3,3,3,3,	
+        };
+
+        // Ceiling map
+        // -1 is a value for empty space
+        // Other values do refer to textures starting from 0
+        .int mapC[]=
+        {
+            -1,1,1,1,1,1,1,-1,
+            1,-1,-1,-1,-1,-1,-1,1,
+            1,-1,-1,-1,-1,-1,-1,1,
+            1,-1,-1,-1,-1,-1,-1,1,
+            2,2,2,6,0,-1,-1,-1,
+            2,6,6,6,0,-1,-1,-1,
+            2,6,6,6,0,-1,-1,-1,
+            -1,2,2,2,2,1,1,1,	
+        }; 
+
+        // Door map that will transition between scenes(maps)
+        // -1 is a regular door that can be opened
+        // Ohter values are map numbers(to be implemented)
+        .int mapD[]=
+        {
+            0,0,0,0,0,0,0,0,
+            0,0,0,0,0,0,0,0,
+            0,0,0,0,0,0,0,0,
+            1,-1,-1,-1,-1,-1,-1,1,
+            2,2,2,6,0,-1,-1,-1,
+            2,6,6,6,0,-1,-1,-1,
+            2,6,6,6,0,-1,-1,-1,
+            -1,2,2,2,2,1,1,1,	
+        }; 
+    };
+}
 GameState initGameState(void)
 {
     EngineConfig config=loadConfig();
