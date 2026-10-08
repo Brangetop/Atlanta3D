@@ -2,7 +2,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <ctype.h>
 #include <GL/glut.h>
 
 #include "textures/textures32.ppm"
@@ -135,80 +135,59 @@ EngineConfig loadConfig(void)
     return config;
 }
 
+// NOTICE!
+// --- Move this function into file handling C file later on ---
+static int readMap(FILE *fp, int map[64], int isLastMap)
+{
+    for(int i=0; i<64; i++)
+    {
+        if(fscanf(fp," %d",&map[i]!=1) { return 0; } // Unable to read the number
+    }
+
+    if(!(isLastMap && i==63))
+    {
+        int ch;
+        do { ch=fgetc(fp); } while(ch!=EOF && isspace((unsigned char)ch));
+
+        if(ch!=',') { return 0; }
+    }
+    return 1;
+}
+
 Scene loadScene(int)
 {
-    Scene scene=
+    Scene scene={0};
+    char filename[64]
+    
+    snprintf(filename, sizeof filename, "scenes/scene%d.txt", sceneNumber);
+
+    FILE *fp=fopen(filename,"r");
+    if(fp==NULL) { perror(filename); return scene; }
+
+    int ok=
+        readMap(fp,scene.mapW,0) &&
+        readMap(fp,scene.mapF,0) &&
+        readMap(fp,scene.mapC,0) &&
+        readMap(fp,scene.mapD,1);
+
+    fclose(fp);
+
+    if(!ok)
     {
-        // Walls map
-        // 0 means no wall
-        // other values refer to textures by [index]-1 
-        // meaning 1 is texture number 0 etc.
-        .int mapW[]=
-        {
-            2,2,2,2,2,2,2,2,
-            2,0,0,0,0,0,0,1,
-            2,0,0,0,0,0,0,3,
-            2,0,0,0,0,0,0,1,
-            2,5,5,3,5,0,0,1,
-            5,0,0,0,5,0,0,1,
-            5,0,0,0,5,0,0,1,
-            2,5,5,5,2,2,2,2,	
-        };
+        fprintf(stderr, "Error while reading scene file: ", filename);
+        memset(&scene,0,sizeof scene);
+    }
 
-        // Floor map
-        // Other values do refer to textures starting from 0
-        .int mapF[]=
-        {
-            3,3,3,3,3,1,1,1,
-            3,3,3,3,3,3,3,1,
-            3,3,3,7,7,7,7,1,
-            3,3,3,7,3,3,3,1,
-            3,3,3,5,3,3,3,3,
-            3,5,5,5,3,3,3,3,
-            3,5,5,5,3,3,3,3,
-            3,3,3,3,3,3,3,3,	
-        };
-
-        // Ceiling map
-        // -1 is a value for empty space
-        // Other values do refer to textures starting from 0
-        .int mapC[]=
-        {
-            -1,1,1,1,1,1,1,-1,
-            1,-1,-1,-1,-1,-1,-1,1,
-            1,-1,-1,-1,-1,-1,-1,1,
-            1,-1,-1,-1,-1,-1,-1,1,
-            2,2,2,6,0,-1,-1,-1,
-            2,6,6,6,0,-1,-1,-1,
-            2,6,6,6,0,-1,-1,-1,
-            -1,2,2,2,2,1,1,1,	
-        }; 
-
-        // Door map that will transition between scenes(maps)
-        // -1 is a regular door that can be opened
-        // Ohter values are map numbers(to be implemented)
-        .int mapD[]=
-        {
-            0,0,0,0,0,0,0,0,
-            0,0,0,0,0,0,0,0,
-            0,0,0,0,0,0,0,0,
-            1,-1,-1,-1,-1,-1,-1,1,
-            2,2,2,6,0,-1,-1,-1,
-            2,6,6,6,0,-1,-1,-1,
-            2,6,6,6,0,-1,-1,-1,
-            -1,2,2,2,2,1,1,1,	
-        }; 
-    };
+    return scene;
 }
+
 GameState initGameState(void)
 {
-    EngineConfig config=loadConfig();
-    
-    GameState state =
-    {
-        .engineConfig=config,
-        .currentScene=0
-    };
+    GameState state={0};
+
+    state.engineConfig=loadConfig();
+    state.currentScene=0;
+    state.scene=loadScene(state.currentScene);
 
     return state;
 }
