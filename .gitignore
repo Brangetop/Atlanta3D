@@ -1,6 +1,7 @@
 engine/atlanta3D_engine
 .todo
 atlanta3D_engine.exe
+atlanta3D_engine
 libfreeglut.dll
 engine/Atlanta3D.exe
 .vscode/*
