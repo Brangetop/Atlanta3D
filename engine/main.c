@@ -22,6 +22,15 @@ typedef struct
 
 typedef struct
 {
+    float r_bright_ws,g_bright_ws,b_bright_ws;
+    float r_dark_ws,g_dark_ws,b_dark_ws;
+    float r_fs,g_fs,b_fs;
+    float r_cs,g_cs,b_cs;
+} Shader;
+
+
+typedef struct
+{
     int width;
     int height;
     int *mapW;
@@ -32,15 +41,14 @@ typedef struct
 
 typedef struct
 {
+    // Data for logic part
     EngineConfig engineConfig;
-    Scene scene;
     int currentScene;
-    
+    // data for renderer
+    // need to just pass ts to renderer so its separated
+    Scene scene;
+    Shader shader; // NOTE: shader is linked to a scene! if you have multiple scenes, you must have a shader for them all.
 } GameState;
-
-
-// Need to code the loadScene function that would take number from gameState as an arguement
-// And load the scene needed to global game state
 
 // ----- Global scope -----
 // Yes, its kinda wrong
@@ -148,13 +156,37 @@ Scene loadScene(int sceneNumber)
     return scene;
 }
 
+Shader loadShader(int shaderNumber)
+{
+    Shader shader={0.0f,0.0f,0.0f,0.0f};
+    char filename[64];
+
+    snprintf(filename,sizeof(filename),"shaders/shader%d.txt",shaderNumber);
+
+    FILE *fp=fopen(filename,"r");
+    if(fp==NULL) {perror(filename); return shader;}
+
+    int read_count=fscanf(fp, "%f %f %f %f %f %f %f %f %f %f %f %f",
+        &shader.r_bright_ws,&shader.g_bright_ws,&shader.b_bright_ws,
+        &shader.r_dark_ws,  &shader.g_dark_ws,  &shader.b_dark_ws,
+        &shader.r_fs,       &shader.g_fs,       &shader.b_fs,
+        &shader.r_cs,       &shader.g_cs,       &shader.b_cs);
+
+    if(read_count!=12) { fprintf(stderr,"error while reading from %s",filename); return shader; }
+    fclose(fp);
+
+    return shader;
+}
+
 GameState initGameState(void)
 {
     GameState state={0};
 
     state.engineConfig=loadConfig();
     state.currentScene=1;
+
     state.scene=loadScene(state.currentScene);
+    state.shader=loadShader(state.currentScene);
 
     return state;
 }
@@ -232,6 +264,7 @@ void Buttons(unsigned char key,int x,int y)
 void drawRays2D()
 {
     const Scene *scene=&gameState.scene;
+    const int MAX_DOF=(scene->width>scene->height)?scene->width:scene->height;
 
     int r,mx,my,mp,dof,side; float vx,vy,rx,ry,ra,xo,yo,disV,disH; 
     
@@ -255,9 +288,9 @@ void drawRays2D()
             ry=(px-rx)*Tan+py; xo=-mapS; 
             yo=-xo*Tan;
         }
-        else { rx=px; ry=py; dof=8;} 
+        else { rx=px; ry=py; dof=MAX_DOF;} 
 
-        while(dof<8)
+        while(dof<MAX_DOF)
         { 
             mx=(int)floorf(rx/mapS); my=(int)floorf(ry/mapS); 
             
@@ -266,7 +299,7 @@ void drawRays2D()
             mp=my*scene->width+mx;
             if(scene->mapW[mp]>0)
             { 
-                vmt=scene->mapW[mp]-1; dof=8; disV=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py); // hit
+                vmt=scene->mapW[mp]-1; dof=MAX_DOF; disV=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py); // hit
             }   
             else{ rx+=xo; ry+=yo; dof++; }
         } 
@@ -286,16 +319,16 @@ void drawRays2D()
             yo=mapS; 
             xo=-yo*Tan;
         }
-        else{ rx=px; ry=py; dof=8;}
+        else{ rx=px; ry=py; dof=MAX_DOF;}
         
-        while(dof<8) 
+        while(dof<MAX_DOF) 
         { 
             mx=(int)floorf(rx/mapS); my=(int)floorf(ry/mapS);
 
             if(mx<0 || mx>=scene->width || my<0 || my>=scene->height) { break; }
 
             mp=my*scene->width+mx;
-            if(scene->mapW[mp]>0){ hmt=scene->mapW[mp]-1; dof=8; disH=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);}//hit        
+            if(scene->mapW[mp]>0){ hmt=scene->mapW[mp]-1; dof=MAX_DOF; disH=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);}//hit        
             else{ rx+=xo; ry+=yo; dof++;}
         } 
         
@@ -307,8 +340,10 @@ void drawRays2D()
             continue;
         }
 
-        float shade=1;
-        if(disV<disH){ hmt=vmt; shade=0.5; rx=vx; ry=vy; disH=disV;}
+        //float shade=gameState.shader.bright_ws;
+        int is_vertical=0;
+
+        if(disV<disH){ hmt=vmt; is_vertical=1; rx=vx; ry=vy; disH=disV;}
         //glLineWidth(2); glBegin(GL_LINES); glVertex2i(px,py); glVertex2i(rx,ry); glEnd(); // top down rays
         
         // draw 3D
@@ -327,7 +362,7 @@ void drawRays2D()
         int y;
         float ty=offset*ty_step;
         float tx;
-        if(shade==1)
+        if(!is_vertical)
         {
             tx=(int)floorf(rx/2)%32; if (ra>180){tx=31-tx;}   
         } 
@@ -336,11 +371,24 @@ void drawRays2D()
             tx=(int)floorf(ry/2)%32; if (ra>90&&ra<270){tx=31-tx;} 
         }
 
-        for(y=0;y<lineH;y++) {
+        // rgb multipliers just for shading
+        float sh_r, sh_g, sh_b;
+        if (!is_vertical) {
+            sh_r = gameState.shader.r_bright_ws;
+            sh_g = gameState.shader.g_bright_ws;
+            sh_b = gameState.shader.b_bright_ws;
+        } else {
+            sh_r = gameState.shader.r_dark_ws;
+            sh_g = gameState.shader.g_dark_ws;
+            sh_b = gameState.shader.b_dark_ws;
+        }
+
+        for(y=0;y<lineH;y++) 
+        {
             int pixel=((int)ty*32+(int)tx)*3+(hmt*32*32*3);
-            int red=All_Textures[pixel+0]*shade;
-            int green=All_Textures[pixel+1]*shade;
-            int blue=All_Textures[pixel+2]*shade;
+            int red=All_Textures[pixel+0]*sh_r;
+            int green=All_Textures[pixel+1]*sh_g;
+            int blue=All_Textures[pixel+2]*sh_b;
             
             glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8,y+lineOff);glEnd();
             ty+=ty_step;
@@ -348,6 +396,8 @@ void drawRays2D()
 
         // --- Draw floors and roof ---
         // something here causes devision by 0. too bad!
+        glPointSize(8);
+        glBegin(GL_POINTS);
         for(y=lineOff+lineH;y<640;y++)
         {
             // ts was causing division by 0
@@ -368,22 +418,23 @@ void drawRays2D()
             int texture=scene->mapF[mp]*32*32;
 
             int pixel=(((int)ty&31)*32+((int)tx&31))*3+texture*3;
-            int red=All_Textures[pixel+0]*0.7;
-            int green=All_Textures[pixel+1]*0.7;
-            int blue=All_Textures[pixel+2]*0.7;
+            int red=All_Textures[pixel+0]*gameState.shader.r_fs;
+            int green=All_Textures[pixel+1]*gameState.shader.g_fs;
+            int blue=All_Textures[pixel+2]*gameState.shader.b_fs;
             
-            glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8,y);glEnd();
+            glColor3ub(red,green,blue);glVertex2i(r*8,y);
             
             // draw roof
             texture=scene->mapC[mp]*32*32;
             pixel=(((int)ty&31)*32+((int)tx&31))*3+texture*3;
-            red=All_Textures[pixel+0];
-            green=All_Textures[pixel+1];
-            blue=All_Textures[pixel+2];
+            red=All_Textures[pixel+0]*gameState.shader.r_cs;
+            green=All_Textures[pixel+1]*gameState.shader.g_cs;
+            blue=All_Textures[pixel+2]*gameState.shader.b_cs;
             
-            if(texture>=0){glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8,640-y);glEnd();}
+            if(texture>=0){glColor3ub(red,green,blue);glVertex2i(r*8,640-y);}
         
         }
+        glEnd();
         ra=FixAng(ra-0.5);
     }
 }
@@ -451,7 +502,7 @@ void ButtonDown(unsigned char key,int x,int y)
         int ipx=px/64.0, ipxa_xo=(px+xo)/64.0;
         int ipy=py/64.0, ipya_yo=(py+yo)/64.0;
 
-        if(gameState.scene.mapW[ipya_yo*mapX+ipxa_xo]==3) { gameState.scene.mapW[ipya_yo*mapX+ipxa_xo]=0;}
+        if(gameState.scene.mapW[ipya_yo*gameState.scene.width+ipxa_xo]==3) { gameState.scene.mapW[ipya_yo*gameState.scene.width+ipxa_xo]=0;}
     }
     glutPostRedisplay();
 }
