@@ -26,6 +26,7 @@ typedef struct
     float r_dark_ws,g_dark_ws,b_dark_ws;
     float r_fs,g_fs,b_fs;
     float r_cs,g_cs,b_cs;
+    float r_sb,g_sb,b_sb;
 } Shader;
 
 
@@ -166,13 +167,14 @@ Shader loadShader(int shaderNumber)
     FILE *fp=fopen(filename,"r");
     if(fp==NULL) {perror(filename); return shader;}
 
-    int read_count=fscanf(fp, "%f %f %f %f %f %f %f %f %f %f %f %f",
+    int read_count=fscanf(fp, "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", // Maybe color struct lol?
         &shader.r_bright_ws,&shader.g_bright_ws,&shader.b_bright_ws,
         &shader.r_dark_ws,  &shader.g_dark_ws,  &shader.b_dark_ws,
         &shader.r_fs,       &shader.g_fs,       &shader.b_fs,
-        &shader.r_cs,       &shader.g_cs,       &shader.b_cs);
+        &shader.r_cs,       &shader.g_cs,       &shader.b_cs,
+        &shader.r_sb,       &shader.g_sb,       &shader.b_sb);
 
-    if(read_count!=12) { fprintf(stderr,"error while reading from %s",filename); return shader; }
+    if(read_count!=15) { fprintf(stderr,"error while reading from %s",filename); return shader; }
     fclose(fp);
 
     return shader;
@@ -452,9 +454,9 @@ void DrawSkybox()
         {
             int xo=(int)(pa*2-x); if(xo<0){xo+=120;} xo=xo%120;
             int pixel=(y*120+xo)*3;
-            int red=Skybox[pixel+0];
-            int green=Skybox[pixel+1];  
-            int blue=Skybox[pixel+2];
+            int red=Skybox[pixel+0]*gameState.shader.r_sb;
+            int green=Skybox[pixel+1]*gameState.shader.g_sb;  
+            int blue=Skybox[pixel+2]*gameState.shader.b_sb;
             
             glColor3ub(red,green,blue);glVertex2i(x*8,y*8);
         }
