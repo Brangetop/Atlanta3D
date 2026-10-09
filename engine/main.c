@@ -22,14 +22,12 @@ typedef struct
 
 typedef struct
 {
-    // Will load all the maps form a scene file
-    // And
-    // I dont know how not to turn ts into spaghetti code quick
-    // Most likely the architecture is already fucked
-    int mapW[64];
-    int mapF[64];
-    int mapC[64];
-    int mapD[64];
+    int width;
+    int height;
+    int *mapW;
+    int *mapF;
+    int *mapC;
+    int *mapD;
 } Scene;
 
 typedef struct
@@ -50,70 +48,6 @@ typedef struct
 // static EngineConfig engineConfig;
 
 static GameState gameState;
-
-// To be put into struct
-
-// Walls map
-// 0 means no wall
-// other values refer to textures by [index]-1 
-// meaning 1 is texture number 0 etc.
-/*int mapW[]=
-{
-    2,2,2,2,2,2,2,2,
-    2,0,0,0,0,0,0,1,
-    2,0,0,0,0,0,0,3,
-    2,0,0,0,0,0,0,1,
-    2,5,5,3,5,0,0,1,
-    5,0,0,0,5,0,0,1,
-    5,0,0,0,5,0,0,1,
-    2,5,5,5,2,2,2,2,	
-};
-
-// Floor map
-// Other values do refer to textures starting from 0
-int mapF[]=
-{
-    3,3,3,3,3,1,1,1,
-    3,3,3,3,3,3,3,1,
-    3,3,3,7,7,7,7,1,
-    3,3,3,7,3,3,3,1,
-    3,3,3,5,3,3,3,3,
-    3,5,5,5,3,3,3,3,
-    3,5,5,5,3,3,3,3,
-    3,3,3,3,3,3,3,3,	
-};
-
-// Ceiling map
-// -1 is a value for empty space
-// Other values do refer to textures starting from 0
-int mapC[]=
-{
-    -1,1,1,1,1,1,1,-1,
-    1,-1,-1,-1,-1,-1,-1,1,
-    1,-1,-1,-1,-1,-1,-1,1,
-    1,-1,-1,-1,-1,-1,-1,1,
-    2,2,2,6,0,-1,-1,-1,
-    2,6,6,6,0,-1,-1,-1,
-    2,6,6,6,0,-1,-1,-1,
-    -1,2,2,2,2,1,1,1,	
-}; 
-
-// Door map that will transition between scenes(maps)
-// -1 is a regular door that can be opened
-// Ohter values are map numbers(to be implemented)
-int mapD[]=
-{
-    0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,
-    1,-1,-1,-1,-1,-1,-1,1,
-    2,2,2,6,0,-1,-1,-1,
-    2,6,6,6,0,-1,-1,-1,
-    2,6,6,6,0,-1,-1,-1,
-    -1,2,2,2,2,1,1,1,	
-}; 
-
-*/
 
 // loaders.c file later
 EngineConfig loadConfig(void) 
@@ -138,13 +72,13 @@ EngineConfig loadConfig(void)
 
 // NOTICE!
 // --- Move this function into file handling C file later on ---
-static int readMap(FILE *fp, int map[64], int isLastMap)
+static int readMap(FILE *fp, int *map, size_t count, int isLastMap)
 {
-    for(int i=0; i<64; i++)
+    for(size_t i=0; i<count; i++)
     {
         if(fscanf(fp," %d",&map[i])!=1) { return 0; } // Unable to read the number
          
-        if(!(isLastMap && i==63))
+        if(!(isLastMap && i==count-1))
         {
             int ch;
             do { ch=fgetc(fp); } while(ch!=EOF && isspace((unsigned char)ch));
@@ -153,6 +87,22 @@ static int readMap(FILE *fp, int map[64], int isLastMap)
         }
     }
     return 1;
+}
+
+void freeScene(Scene *scene)
+{
+    free(scene->mapW);
+    free(scene->mapF);
+    free(scene->mapC);
+    free(scene->mapD);
+
+    scene->mapW=NULL;
+    scene->mapF=NULL;
+    scene->mapC=NULL;
+    scene->mapD=NULL;
+
+    scene->width=0;
+    scene->height=0;
 }
 
 Scene loadScene(int sceneNumber)
@@ -165,17 +115,33 @@ Scene loadScene(int sceneNumber)
     FILE *fp=fopen(filename,"r");
     if(fp==NULL) { perror(filename); return scene; }
 
+    if(fscanf(fp,"%d %d",&scene.width,&scene.height)!=2 || scene.width<=0 || scene.height<=0)
+    {
+        //fprintf("errrors occured while loading scene %s(invalid dimensions)\n",filename);
+        fclose(fp);
+        return scene;
+    }
+    
+    // Calculating actual scene size and allocating memory
+    size_t count=(size_t)scene.width*(size_t)scene.height;
+
+    scene.mapW=malloc(count*sizeof *scene.mapW);
+    scene.mapF=malloc(count*sizeof *scene.mapF);
+    scene.mapC=malloc(count*sizeof *scene.mapC);
+    scene.mapD=malloc(count*sizeof *scene.mapD);
+    // add !scene.map* error handling later
+
     int ok=
-        readMap(fp,scene.mapW,0) &&
-        readMap(fp,scene.mapF,0) &&
-        readMap(fp,scene.mapC,0) &&
-        readMap(fp,scene.mapD,1);
+        readMap(fp,scene.mapW,count,0) &&
+        readMap(fp,scene.mapF,count,0) &&
+        readMap(fp,scene.mapC,count,0) &&
+        readMap(fp,scene.mapD,count,1);
 
     fclose(fp);
 
     if(!ok)
     {
-        fprintf(stderr, "Error while reading scene file: %s", filename);
+        fprintf(stderr,"Error while reading scene file: %s",filename);
         memset(&scene,0,sizeof scene);
     }
 
@@ -187,7 +153,7 @@ GameState initGameState(void)
     GameState state={0};
 
     state.engineConfig=loadConfig();
-    state.currentScene=0;
+    state.currentScene=1;
     state.scene=loadScene(state.currentScene);
 
     return state;
@@ -203,25 +169,28 @@ typedef struct main
 float sensitivityLR = 0.2;
 float sensitivityMV = 0.2;
 
-void drawMap2D()
+void drawMap2D(void)
 {
-    int x,y,xo,yo;
-    for(y=0;y<mapY;y++)
+    int x,y,xo,yo,index;
+    const Scene *scene=&gameState.scene;
+    for(y=0;y<scene->height;y++)
     {
-        for(x=0;x<mapX;x++)
+        for(x=0;x<scene->width;x++)
         {
-            if(gameState.scene.mapW[y*mapX+x]>0){ glColor3f(1,1,1);} else{ glColor3f(0,0,0);}
-            if(gameState.scene.mapW[y*mapX+x]==4) { glColor3f(1,0.7,0.3); } // different color for doors in debug window
+            index=y*scene->width+x;
+            if(scene->mapW[index]>0){ glColor3f(1,1,1);} else{ glColor3f(0,0,0);}
+            if(scene->mapW[index]==4){ glColor3f(1,0.7,0.3);}
             xo=x*mapS; yo=y*mapS;
-            glBegin(GL_QUADS); 
-            glVertex2i( 0   +xo+1, 0   +yo+1); 
-            glVertex2i( 0   +xo+1, mapS+yo-1); 
-            glVertex2i( mapS+xo-1, mapS+yo-1);  
-            glVertex2i( mapS+xo-1, 0   +yo+1); 
+            glBegin(GL_QUADS);
+            glVertex2i(xo+1,yo+1);
+            glVertex2i(xo+1,yo+mapS-1);
+            glVertex2i(xo+mapS-1,yo+mapS-1);
+            glVertex2i(xo+mapS-1,yo+1);
             glEnd();
-        } 
-    } 
+        }
+    }
 }
+
 
 // Helper functions
 float degToRad(float a) { return a*M_PI/180.0;}
@@ -264,7 +233,6 @@ void drawRays2D()
 {
     const Scene *scene=&gameState.scene;
 
-    // Main walls/floor/ceiling rendering logic
     int r,mx,my,mp,dof,side; float vx,vy,rx,ry,ra,xo,yo,disV,disH; 
     
     ra=FixAng(pa+30);
@@ -278,22 +246,29 @@ void drawRays2D()
         // vertical rays
         if(cos(degToRad(ra))> 0.001)
         { 
-            rx=(((int)px>>6)<<6)+64;
-            ry=(px-rx)*Tan+py; xo= 64; yo=-xo*Tan;
+            rx=(((int)px/mapS)*mapS)+mapS;
+            ry=(px-rx)*Tan+py; xo=mapS; yo=-xo*Tan;
         }
         else if(cos(degToRad(ra))<-0.001)
         { 
-            rx=(((int)px>>6)<<6) -0.0001; 
-            ry=(px-rx)*Tan+py; xo=-64; 
+            rx=(((int)px/mapS)*mapS)-0.0001; 
+            ry=(px-rx)*Tan+py; xo=-mapS; 
             yo=-xo*Tan;
         }
         else { rx=px; ry=py; dof=8;} 
 
         while(dof<8)
         { 
-            mx=(int)(rx)>>6; my=(int)(ry)>>6; mp=my*mapX+mx;                     
-            if(mp>0 && mp<mapX*mapY && scene->mapW[mp]>0){ vmt=scene->mapW[mp]-1; dof=8; disV=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);}//hit    
-            else{ rx+=xo; ry+=yo; dof+=1;}
+            mx=(int)floorf(rx/mapS); my=(int)floorf(ry/mapS); 
+            
+            if(mx<0 || mx>=scene->width || my<0 || my>=scene->height) { break; }
+            
+            mp=my*scene->width+mx;
+            if(scene->mapW[mp]>0)
+            { 
+                vmt=scene->mapW[mp]-1; dof=8; disV=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py); // hit
+            }   
+            else{ rx+=xo; ry+=yo; dof++; }
         } 
         vx=rx; vy=ry;
 
@@ -301,34 +276,46 @@ void drawRays2D()
         dof=0; disH=100000;
         Tan=1.0/Tan; 
         if(sin(degToRad(ra))> 0.001){ 
-            ry=(((int)py>>6)<<6) -0.0001; 
-            rx=(py-ry)*Tan+px; yo=-64; 
+            ry=(((int)py/mapS)*mapS)-0.0001; 
+            rx=(py-ry)*Tan+px; yo=-mapS; 
             xo=-yo*Tan;
         }
         else if(sin(degToRad(ra))<-0.001){ 
-            ry=(((int)py>>6)<<6)+64;
+            ry=(((int)py/mapS)*mapS)+mapS;
             rx=(py-ry)*Tan+px; 
-            yo= 64; 
+            yo=mapS; 
             xo=-yo*Tan;
         }
         else{ rx=px; ry=py; dof=8;}
         
         while(dof<8) 
         { 
-            mx=(int)(rx)>>6; my=(int)(ry)>>6; mp=my*mapX+mx;                          
-            if(mp>0 && mp<mapX*mapY && scene->mapW[mp]>0){ hmt=scene->mapW[mp]-1; dof=8; disH=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);}//hit        
-            else{ rx+=xo; ry+=yo; dof+=1;}
+            mx=(int)floorf(rx/mapS); my=(int)floorf(ry/mapS);
+
+            if(mx<0 || mx>=scene->width || my<0 || my>=scene->height) { break; }
+
+            mp=my*scene->width+mx;
+            if(scene->mapW[mp]>0){ hmt=scene->mapW[mp]-1; dof=8; disH=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);}//hit        
+            else{ rx+=xo; ry+=yo; dof++;}
         } 
         
         //draw the shortest one
 
+        if(disV==100000 && disH==100000)
+        {
+            ra=FixAng(ra-0.5);
+            continue;
+        }
+
         float shade=1;
-        //glColor3f(0,0.8,0);
         if(disV<disH){ hmt=vmt; shade=0.5; rx=vx; ry=vy; disH=disV;}
         //glLineWidth(2); glBegin(GL_LINES); glVertex2i(px,py); glVertex2i(rx,ry); glEnd(); // top down rays
         
         // draw 3D
         int ca=FixAng(pa-ra); disH=disH*cos(degToRad(ca)); // fisheye fix
+
+        if(disH<0.001f) disH=0.001f;
+
         int lineH=(mapS*640)/(disH); 
         
         float ty_step=32.0/(float)lineH;
@@ -342,11 +329,11 @@ void drawRays2D()
         float tx;
         if(shade==1)
         {
-            tx=(int)floor(rx/2)%32; if (ra>180){tx=31-tx;}   
+            tx=(int)floorf(rx/2)%32; if (ra>180){tx=31-tx;}   
         } 
         else 
         {
-            tx=(int)floor(ry/2)%32; if (ra>90&&ra<270){tx=31-tx;} 
+            tx=(int)floorf(ry/2)%32; if (ra>90&&ra<270){tx=31-tx;} 
         }
 
         for(y=0;y<lineH;y++) {
@@ -370,9 +357,17 @@ void drawRays2D()
         
             tx=px/2 + cos(deg)*158*32*2/dy/raFix;
             ty=py/2 - sin(deg)*158*32*2/dy/raFix;
-            int mp=scene->mapF[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
 
-            int pixel=(((int)(ty)&31)*32 + ((int)(tx)&31))*3+mp*3;
+            mx=(int)floorf(tx/32.0);
+            my=(int)floorf(ty/32.0);
+
+            if(mx<0 || mx>=scene->width || my<0 || my>=scene->height)
+                continue;
+
+            mp=my*scene->width+mx;
+            int texture=scene->mapF[mp]*32*32;
+
+            int pixel=(((int)ty&31)*32+((int)tx&31))*3+texture*3;
             int red=All_Textures[pixel+0]*0.7;
             int green=All_Textures[pixel+1]*0.7;
             int blue=All_Textures[pixel+2]*0.7;
@@ -380,18 +375,19 @@ void drawRays2D()
             glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8,y);glEnd();
             
             // draw roof
-            mp=scene->mapC[(int)(ty/32.0)*mapX+(int)(tx/32.0)]*32*32;
-            pixel=(((int)(ty)&31)*32 + ((int)(tx)&31))*3+mp*3;
+            texture=scene->mapC[mp]*32*32;
+            pixel=(((int)ty&31)*32+((int)tx&31))*3+texture*3;
             red=All_Textures[pixel+0];
             green=All_Textures[pixel+1];
             blue=All_Textures[pixel+2];
             
-            if(mp>=0){glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8,640-y);glEnd();}
+            if(texture>=0){glPointSize(8);glColor3ub(red,green,blue);glBegin(GL_POINTS);glVertex2i(r*8,640-y);glEnd();}
         
         }
         ra=FixAng(ra-0.5);
     }
 }
+
 
 void DrawSkybox()
 {
@@ -505,13 +501,13 @@ void display()
     
     if(Keys.w==1)
     {  
-        if(gameState.scene.mapW[ipy*mapX+ipxa_xo]==0){ px+=pdx*sensMV*fps;}
-        if(gameState.scene.mapW[ipya_yo*mapX+ipx]==0){ py+=pdy*sensMV*fps;}
+        if(gameState.scene.mapW[ipy*gameState.scene.width+ipxa_xo]==0){ px+=pdx*sensMV*fps;}
+        if(gameState.scene.mapW[ipya_yo*gameState.scene.width+ipx]==0){ py+=pdy*sensMV*fps;}
     }
     else if(Keys.s==1)
     { 
-        if(gameState.scene.mapW[ipy*mapX+ipxs_xo]==0){ px-=pdx*sensMV*fps;}
-        if(gameState.scene.mapW[ipys_yo*mapX+ipx]==0){ py-=pdy*sensMV*fps;}
+        if(gameState.scene.mapW[ipy*gameState.scene.width+ipxs_xo]==0){ px-=pdx*sensMV*fps;}
+        if(gameState.scene.mapW[ipys_yo*gameState.scene.width+ipx]==0){ py-=pdy*sensMV*fps;}
     }
 
     glutPostRedisplay();
