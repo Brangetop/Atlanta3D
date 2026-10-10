@@ -12,6 +12,8 @@
 #define mapY  8
 #define mapS 64
 
+float degToRad(float a);
+
 // header file later
 typedef struct
 {
@@ -29,6 +31,11 @@ typedef struct
     float r_sb,g_sb,b_sb;
 } Shader;
 
+typedef struct
+{
+    float x,y,ang;
+    float dx,dy;
+} Player;
 
 typedef struct
 {
@@ -38,6 +45,8 @@ typedef struct
     int *mapF;
     int *mapC;
     int *mapD;
+
+    Player spawn;
 } Scene;
 
 typedef struct
@@ -45,6 +54,7 @@ typedef struct
     // Data for logic part
     EngineConfig engineConfig;
     int currentScene;
+    Player player;
     // data for renderer
     // need to just pass ts to renderer so its separated
     Scene scene;
@@ -81,6 +91,12 @@ EngineConfig loadConfig(void)
 
 // NOTICE!
 // --- Move this function into file handling C file later on ---
+void updatePlayerDirection(Player *player)
+{
+    player->dx = cosf(degToRad(player->ang));
+    player->dy = -sinf(degToRad(player->ang));
+}
+
 static int readMap(FILE *fp, int *map, size_t count, int isLastMap)
 {
     for(size_t i=0; i<count; i++)
@@ -127,6 +143,12 @@ Scene loadScene(int sceneNumber)
     if(fscanf(fp,"%d %d",&scene.width,&scene.height)!=2 || scene.width<=0 || scene.height<=0)
     {
         //fprintf("errrors occured while loading scene %s(invalid dimensions)\n",filename);
+        fclose(fp);
+        return scene;
+    }
+
+    if (fscanf(fp,"%f %f %f",&scene.spawn.x,&scene.spawn.y,&scene.spawn.ang) != 3) 
+    {
         fclose(fp);
         return scene;
     }
@@ -180,6 +202,17 @@ Shader loadShader(int shaderNumber)
     return shader;
 }
 
+void updateScene(void)
+{
+    freeScene(&gameState.scene);
+    gameState.scene=loadScene(gameState.currentScene);
+    gameState.player=gameState.scene.spawn;
+    
+    updatePlayerDirection(&gameState.player);
+    gameState.shader=loadShader(gameState.currentScene);
+}
+
+
 GameState initGameState(void)
 {
     GameState state={0};
@@ -189,6 +222,9 @@ GameState initGameState(void)
 
     state.scene=loadScene(state.currentScene);
     state.shader=loadShader(state.currentScene);
+
+    state.player = state.scene.spawn;
+    updatePlayerDirection(&state.player);
 
     return state;
 }
@@ -236,7 +272,7 @@ float FixAng(float a)
     return a;
 }
 
-float px,py,pdx,pdy,pa;
+//float px,py,gameState.player.dx,pdy,pa;
 
 void drawPlayer2D()
 {
@@ -244,21 +280,21 @@ void drawPlayer2D()
     glPointSize(8);
     glLineWidth(4);
     glBegin(GL_POINTS);
-    glVertex2i(px,py);
+    glVertex2i(gameState.player.x,gameState.player.y);
     glEnd();
 
     glBegin(GL_LINES);
-    glVertex2i(px,py);
-    glVertex2i(px+pdx*20,py+pdy*20);
+    glVertex2i(gameState.player.x,gameState.player.y);
+    glVertex2i(gameState.player.x+gameState.player.dx*20,gameState.player.y+gameState.player.dy*20);
     glEnd();
 }
 
 void Buttons(unsigned char key,int x,int y)
 {
-    if(key=='a'){ pa+=5; pa=FixAng(pa); pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa));} 	
-    if(key=='d'){ pa-=5; pa=FixAng(pa); pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa));} 
-    if(key=='w'){ px+=pdx*5; py+=pdy*5;}
-    if(key=='s'){ px-=pdx*5; py-=pdy*5;}
+    if(key=='a'){ gameState.player.ang+=5; gameState.player.ang=FixAng(gameState.player.ang); gameState.player.dx=cos(degToRad(gameState.player.ang)); gameState.player.dy=-sin(degToRad(gameState.player.ang));} 	
+    if(key=='d'){ gameState.player.ang-=5; gameState.player.ang=FixAng(gameState.player.ang); gameState.player.dx=cos(degToRad(gameState.player.ang)); gameState.player.dy=-sin(degToRad(gameState.player.ang));} 
+    if(key=='w'){ gameState.player.x+=gameState.player.dx*5; gameState.player.y+=gameState.player.dy*5;}
+    if(key=='s'){ gameState.player.x-=gameState.player.dx*5; gameState.player.y-=gameState.player.dy*5;}
 
     glutPostRedisplay();
 }
@@ -270,7 +306,7 @@ void drawRays2D()
 
     int r,mx,my,mp,dof,side; float vx,vy,rx,ry,ra,xo,yo,disV,disH; 
     
-    ra=FixAng(pa+30);
+    ra=FixAng(gameState.player.ang+30);
     
     for(r=0;r<120;r++)
     {
@@ -281,16 +317,16 @@ void drawRays2D()
         // vertical rays
         if(cos(degToRad(ra))> 0.001)
         { 
-            rx=(((int)px/mapS)*mapS)+mapS;
-            ry=(px-rx)*Tan+py; xo=mapS; yo=-xo*Tan;
+            rx=(((int)gameState.player.x/mapS)*mapS)+mapS;
+            ry=(gameState.player.x-rx)*Tan+gameState.player.y; xo=mapS; yo=-xo*Tan;
         }
         else if(cos(degToRad(ra))<-0.001)
         { 
-            rx=(((int)px/mapS)*mapS)-0.0001; 
-            ry=(px-rx)*Tan+py; xo=-mapS; 
+            rx=(((int)gameState.player.x/mapS)*mapS)-0.0001; 
+            ry=(gameState.player.x-rx)*Tan+gameState.player.y; xo=-mapS; 
             yo=-xo*Tan;
         }
-        else { rx=px; ry=py; dof=MAX_DOF;} 
+        else { rx=gameState.player.x; ry=gameState.player.y; dof=MAX_DOF;} 
 
         while(dof<MAX_DOF)
         { 
@@ -301,7 +337,7 @@ void drawRays2D()
             mp=my*scene->width+mx;
             if(scene->mapW[mp]>0)
             { 
-                vmt=scene->mapW[mp]-1; dof=MAX_DOF; disV=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py); // hit
+                vmt=scene->mapW[mp]-1; dof=MAX_DOF; disV=cos(degToRad(ra))*(rx-gameState.player.x)-sin(degToRad(ra))*(ry-gameState.player.y); // hit
             }   
             else{ rx+=xo; ry+=yo; dof++; }
         } 
@@ -311,17 +347,17 @@ void drawRays2D()
         dof=0; disH=100000;
         Tan=1.0/Tan; 
         if(sin(degToRad(ra))> 0.001){ 
-            ry=(((int)py/mapS)*mapS)-0.0001; 
-            rx=(py-ry)*Tan+px; yo=-mapS; 
+            ry=(((int)gameState.player.y/mapS)*mapS)-0.0001; 
+            rx=(gameState.player.y-ry)*Tan+gameState.player.x; yo=-mapS; 
             xo=-yo*Tan;
         }
         else if(sin(degToRad(ra))<-0.001){ 
-            ry=(((int)py/mapS)*mapS)+mapS;
-            rx=(py-ry)*Tan+px; 
+            ry=(((int)gameState.player.y/mapS)*mapS)+mapS;
+            rx=(gameState.player.y-ry)*Tan+gameState.player.x; 
             yo=mapS; 
             xo=-yo*Tan;
         }
-        else{ rx=px; ry=py; dof=MAX_DOF;}
+        else{ rx=gameState.player.x; ry=gameState.player.y; dof=MAX_DOF;}
         
         while(dof<MAX_DOF) 
         { 
@@ -330,7 +366,7 @@ void drawRays2D()
             if(mx<0 || mx>=scene->width || my<0 || my>=scene->height) { break; }
 
             mp=my*scene->width+mx;
-            if(scene->mapW[mp]>0){ hmt=scene->mapW[mp]-1; dof=MAX_DOF; disH=cos(degToRad(ra))*(rx-px)-sin(degToRad(ra))*(ry-py);}//hit        
+            if(scene->mapW[mp]>0){ hmt=scene->mapW[mp]-1; dof=MAX_DOF; disH=cos(degToRad(ra))*(rx-gameState.player.x)-sin(degToRad(ra))*(ry-gameState.player.y);}//hit        
             else{ rx+=xo; ry+=yo; dof++;}
         } 
         
@@ -346,10 +382,10 @@ void drawRays2D()
         int is_vertical=0;
 
         if(disV<disH){ hmt=vmt; is_vertical=1; rx=vx; ry=vy; disH=disV;}
-        //glLineWidth(2); glBegin(GL_LINES); glVertex2i(px,py); glVertex2i(rx,ry); glEnd(); // top down rays
+        //glLineWidth(2); glBegin(GL_LINES); glVertex2i(gameState.player.x,gameState.player.y); glVertex2i(rx,ry); glEnd(); // top down rays
         
         // draw 3D
-        int ca=FixAng(pa-ra); disH=disH*cos(degToRad(ca)); // fisheye fix
+        int ca=FixAng(gameState.player.ang-ra); disH=disH*cos(degToRad(ca)); // fisheye fix
 
         if(disH<0.001f) disH=0.001f;
 
@@ -403,12 +439,12 @@ void drawRays2D()
         for(y=lineOff+lineH;y<640;y++)
         {
             // ts was causing division by 0
-            float dy=y-(640/2.0), deg=degToRad(ra), raFix=cos(degToRad(FixAng(pa-ra)));
+            float dy=y-(640/2.0), deg=degToRad(ra), raFix=cos(degToRad(FixAng(gameState.player.ang-ra)));
             if (fabsf(dy) < 0.001f || fabsf(raFix) < 0.001f)
                 continue;
         
-            tx=px/2 + cos(deg)*158*32*2/dy/raFix;
-            ty=py/2 - sin(deg)*158*32*2/dy/raFix;
+            tx=gameState.player.x/2 + cos(deg)*158*32*2/dy/raFix;
+            ty=gameState.player.y/2 - sin(deg)*158*32*2/dy/raFix;
 
             mx=(int)floorf(tx/32.0);
             my=(int)floorf(ty/32.0);
@@ -452,7 +488,7 @@ void DrawSkybox()
     {
         for(x=0;x<120;x++)
         {
-            int xo=(int)(pa*2-x); if(xo<0){xo+=120;} xo=xo%120;
+            int xo=(int)(gameState.player.ang*2-x); if(xo<0){xo+=120;} xo=xo%120;
             int pixel=(y*120+xo)*3;
             int red=Skybox[pixel+0]*gameState.shader.r_sb;
             int green=Skybox[pixel+1]*gameState.shader.g_sb;  
@@ -471,11 +507,11 @@ void init()
 {
     glClearColor(0.3,0.3,0.3,0);
     gluOrtho2D(0,960,640,0);
-    px=150; py=400; pa=90;
-    pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa)); 
+
 
     
 }
+
 
 void ButtonDown(unsigned char key,int x,int y)
 {
@@ -498,13 +534,22 @@ void ButtonDown(unsigned char key,int x,int y)
     }
 
     if(key=='e') { 
-        int xo=0; if(pdx<0) { xo=-25; } else { xo=25; }
-        int yo=0; if(pdy<0) { yo=-25; } else { yo=25; }
+        int xo=0; if(gameState.player.dx<0) { xo=-25; } else { xo=25; }
+        int yo=0; if(gameState.player.dy<0) { yo=-25; } else { yo=25; }
 
-        int ipx=px/64.0, ipxa_xo=(px+xo)/64.0;
-        int ipy=py/64.0, ipya_yo=(py+yo)/64.0;
+        int ipx=gameState.player.x/64.0, ipxa_xo=(gameState.player.x+xo)/64.0;
+        int ipy=gameState.player.y/64.0, ipya_yo=(gameState.player.y+yo)/64.0;
 
         if(gameState.scene.mapW[ipya_yo*gameState.scene.width+ipxa_xo]==3) { gameState.scene.mapW[ipya_yo*gameState.scene.width+ipxa_xo]=0;}
+
+        
+        if(gameState.scene.mapD[ipya_yo*gameState.scene.width+ipxa_xo]>0) 
+        { 
+            gameState.currentScene=gameState.scene.mapD[ipya_yo*gameState.scene.width+ipxa_xo];
+
+            updateScene();
+        }
+        
     }
     glutPostRedisplay();
 }
@@ -544,23 +589,23 @@ void display()
     fps=(frame2-frame1);
     frame1=glutGet(GLUT_ELAPSED_TIME);
     
-    int xo=0; if(pdx<0) { xo=-20; } else { xo=20; }
-    int yo=0; if(pdy<0) { yo=-20; } else { yo=20; }
-    int ipx=px/64.0, ipxa_xo=(px+xo)/64.0, ipxs_xo=(px-xo)/64.0;
-    int ipy=py/64.0, ipya_yo=(py+yo)/64.0, ipys_yo=(py-yo)/64.0;
+    int xo=0; if(gameState.player.dx<0) { xo=-20; } else { xo=20; }
+    int yo=0; if(gameState.player.dy<0) { yo=-20; } else { yo=20; }
+    int ipx=gameState.player.x/64.0, ipxa_xo=(gameState.player.x+xo)/64.0, ipxs_xo=(gameState.player.x-xo)/64.0;
+    int ipy=gameState.player.y/64.0, ipya_yo=(gameState.player.y+yo)/64.0, ipys_yo=(gameState.player.y-yo)/64.0;
     
-    if(Keys.a==1){ pa+=sensLR*fps; pa=FixAng(pa); pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa));} 	
-    if(Keys.d==1){ pa-=sensLR*fps; pa=FixAng(pa); pdx=cos(degToRad(pa)); pdy=-sin(degToRad(pa));} 
+    if(Keys.a==1){ gameState.player.ang+=sensLR*fps; gameState.player.ang=FixAng(gameState.player.ang); gameState.player.dx=cos(degToRad(gameState.player.ang)); gameState.player.dy=-sin(degToRad(gameState.player.ang));} 	
+    if(Keys.d==1){ gameState.player.ang-=sensLR*fps; gameState.player.ang=FixAng(gameState.player.ang); gameState.player.dx=cos(degToRad(gameState.player.ang)); gameState.player.dy=-sin(degToRad(gameState.player.ang));} 
     
     if(Keys.w==1)
     {  
-        if(gameState.scene.mapW[ipy*gameState.scene.width+ipxa_xo]==0){ px+=pdx*sensMV*fps;}
-        if(gameState.scene.mapW[ipya_yo*gameState.scene.width+ipx]==0){ py+=pdy*sensMV*fps;}
+        if(gameState.scene.mapW[ipy*gameState.scene.width+ipxa_xo]==0){ gameState.player.x+=gameState.player.dx*sensMV*fps;}
+        if(gameState.scene.mapW[ipya_yo*gameState.scene.width+ipx]==0){ gameState.player.y+=gameState.player.dy*sensMV*fps;}
     }
     else if(Keys.s==1)
     { 
-        if(gameState.scene.mapW[ipy*gameState.scene.width+ipxs_xo]==0){ px-=pdx*sensMV*fps;}
-        if(gameState.scene.mapW[ipys_yo*gameState.scene.width+ipx]==0){ py-=pdy*sensMV*fps;}
+        if(gameState.scene.mapW[ipy*gameState.scene.width+ipxs_xo]==0){ gameState.player.x-=gameState.player.dx*sensMV*fps;}
+        if(gameState.scene.mapW[ipys_yo*gameState.scene.width+ipx]==0){ gameState.player.y-=gameState.player.dy*sensMV*fps;}
     }
 
     glutPostRedisplay();
