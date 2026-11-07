@@ -3,7 +3,9 @@
 
 #include "structs.h"
 
-GameState initGameState(void);
-void updateScene(GameState *gameState);
+GameState
+initGameState(void);
+void
+updateScene(GameState* gameState);
 
 #endif

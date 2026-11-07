@@ -2,6 +2,7 @@
 #define PLAYER_H
 #include "structs.h"
 
-void updatePlayerDirection(Player *player);
+void
+updatePlayerDirection(Player* player);
 
 #endif

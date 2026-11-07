@@ -3,28 +3,30 @@
 #include "player.h"
 #include "structs.h"
 
-GameState initGameState(void)
+GameState
+initGameState(void)
 {
-    GameState state={0};
+  GameState state = { 0 };
 
-    state.engineConfig=loadConfig();
-    state.currentScene=1;
+  state.engineConfig = loadConfig();
+  state.currentScene = 1;
 
-    state.scene=loadScene(state.currentScene);
-    state.shader=loadShader(state.currentScene);
+  state.scene = loadScene(state.currentScene);
+  state.shader = loadShader(state.currentScene);
 
-    state.player = state.scene.spawn;
-    updatePlayerDirection(&state.player);
+  state.player = state.scene.spawn;
+  updatePlayerDirection(&state.player);
 
-    return state;
+  return state;
 }
 
-void updateScene(GameState *gameState)
+void
+updateScene(GameState* gameState)
 {
-    freeScene(&gameState->scene);
-    gameState->scene=loadScene(gameState->currentScene);
-    gameState->player=gameState->scene.spawn;
-    
-    updatePlayerDirection(&gameState->player);
-    gameState->shader=loadShader(gameState->currentScene);
+  freeScene(&gameState->scene);
+  gameState->scene = loadScene(gameState->currentScene);
+  gameState->player = gameState->scene.spawn;
+
+  updatePlayerDirection(&gameState->player);
+  gameState->shader = loadShader(gameState->currentScene);
 }
