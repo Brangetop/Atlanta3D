@@ -1,8 +1,9 @@
 #ifndef LOADERS_H
 #define LOADERS_H
 
-#include "structs.h"
 #include <stdio.h>
+
+#include "structs.h"
 
 EngineConfig
 loadConfig(void);

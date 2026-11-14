@@ -1,12 +1,11 @@
 #include <GL/glut.h>
 #include <math.h>
 
-#include "textures/skybox.ppm"
-#include "textures/textures32.ppm"
-
 #include "game_state.h"
 #include "helper.h"
 #include "structs.h"
+#include "textures/skybox.ppm"
+#include "textures/textures32.ppm"
 
 // ----- Global scope -----
 // Yes, its kinda wrong

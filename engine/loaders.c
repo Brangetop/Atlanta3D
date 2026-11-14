@@ -1,4 +1,5 @@
 #include "loaders.h"
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -128,24 +129,25 @@ loadShader(int shaderNumber)
     return shader;
   }
 
-  int read_count = fscanf(
-    fp,
-    "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", // Maybe color struct lol?
-    &shader.r_bright_ws,
-    &shader.g_bright_ws,
-    &shader.b_bright_ws,
-    &shader.r_dark_ws,
-    &shader.g_dark_ws,
-    &shader.b_dark_ws,
-    &shader.r_fs,
-    &shader.g_fs,
-    &shader.b_fs,
-    &shader.r_cs,
-    &shader.g_cs,
-    &shader.b_cs,
-    &shader.r_sb,
-    &shader.g_sb,
-    &shader.b_sb);
+  int read_count =
+    fscanf(fp,
+           "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", // Maybe color struct
+                                                           // lol?
+           &shader.r_bright_ws,
+           &shader.g_bright_ws,
+           &shader.b_bright_ws,
+           &shader.r_dark_ws,
+           &shader.g_dark_ws,
+           &shader.b_dark_ws,
+           &shader.r_fs,
+           &shader.g_fs,
+           &shader.b_fs,
+           &shader.r_cs,
+           &shader.g_cs,
+           &shader.b_cs,
+           &shader.r_sb,
+           &shader.g_sb,
+           &shader.b_sb);
 
   if (read_count != 15) {
     fprintf(stderr, "error while reading from %s", filename);
